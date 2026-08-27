@@ -41,7 +41,7 @@ public class SecurityConfiguration {
         return http.csrf(csrf -> csrf.disable()).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/register", "/login").permitAll()
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/v3/api-docs.yaml", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         .requestMatchers("/overview").authenticated().anyRequest().denyAll())
                 .oauth2ResourceServer(oauth -> oauth.authenticationEntryPoint(entryPoint).jwt(jwt -> { }))
                 .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(entryPoint)).build();

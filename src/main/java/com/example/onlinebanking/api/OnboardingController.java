@@ -12,6 +12,7 @@ import com.example.onlinebanking.service.AuthenticationService;
 import com.example.onlinebanking.service.OverviewService;
 import com.example.onlinebanking.service.RegistrationService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,7 +36,7 @@ public class OnboardingController {
         this.overviews = overviews;
     }
 
-    @PostMapping("/register")
+    @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Register a customer and current account")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Customer registered", content = @Content(schema = @Schema(implementation = RegisterResponse.class))),
@@ -48,7 +49,7 @@ public class OnboardingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(registrations.register(request));
     }
 
-    @PostMapping("/login")
+    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Authenticate a customer")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Authenticated", content = @Content(schema = @Schema(implementation = LoginResponse.class))),
@@ -60,7 +61,7 @@ public class OnboardingController {
         return ResponseEntity.ok(authentication.login(request));
     }
 
-    @GetMapping("/overview")
+    @GetMapping(value = "/overview", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get the authenticated customer's current account", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Account overview", content = @Content(schema = @Schema(implementation = OverviewResponse.class))),

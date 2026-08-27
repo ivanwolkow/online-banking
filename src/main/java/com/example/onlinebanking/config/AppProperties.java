@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
@@ -27,10 +28,20 @@ public record AppProperties(
     }
     public record Security(@Valid Jwt jwt) {
     }
-    public record Jwt(@NotBlank String issuer, @Positive Duration ttl, @NotBlank String secretBase64) {
+    public record Jwt(@NotBlank String issuer, @NotNull Duration ttl, @NotBlank String secretBase64) {
+        public Jwt {
+            if (ttl != null && (ttl.isNegative() || ttl.isZero())) {
+                throw new IllegalArgumentException("JWT TTL must be positive");
+            }
+        }
     }
     public record Database(@Valid RateLimit rateLimit) {
     }
-    public record RateLimit(boolean enabled, @Positive int operationsPerSecond, @Positive Duration maxWait) {
+    public record RateLimit(boolean enabled, @Positive int operationsPerSecond, @NotNull Duration maxWait) {
+        public RateLimit {
+            if (maxWait != null && (maxWait.isNegative() || maxWait.isZero())) {
+                throw new IllegalArgumentException("Database rate-limit maximum wait must be positive");
+            }
+        }
     }
 }

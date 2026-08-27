@@ -1,0 +1,288 @@
+openapi: 3.1.0
+info:
+  title: Customer Onboarding API
+  version: 1.0.0
+servers:
+- url: http://localhost:8080
+  description: Generated server url
+paths:
+  /register:
+    post:
+      tags:
+      - Customer onboarding
+      summary: Register a customer and current account
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "201":
+          description: Customer registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponse"
+        "400":
+          description: "Malformed, invalid, underage, or unsupported-country request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemResponse"
+        "409":
+          description: Username already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemResponse"
+        "500":
+          description: Account-number generation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemResponse"
+        "503":
+          description: Database busy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemResponse"
+  /login:
+    post:
+      tags:
+      - Customer onboarding
+      summary: Authenticate a customer
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: Malformed or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemResponse"
+        "503":
+          description: Database busy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemResponse"
+  /overview:
+    get:
+      tags:
+      - Customer onboarding
+      summary: Get the authenticated customer's current account
+      operationId: overview
+      responses:
+        "200":
+          description: Account overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OverviewResponse"
+        "401":
+          description: Authentication is required or token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemResponse"
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemResponse"
+        "503":
+          description: Database busy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemResponse"
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    AddressRequest:
+      type: object
+      description: Customer residential address
+      properties:
+        street:
+          type: string
+          example: Keizersgracht
+          maxLength: 100
+          minLength: 0
+        houseNumber:
+          type: string
+          example: 123A
+          maxLength: 20
+          minLength: 0
+        postalCode:
+          type: string
+          example: 1015 CJ
+          maxLength: 20
+          minLength: 0
+        city:
+          type: string
+          example: Amsterdam
+          maxLength: 100
+          minLength: 0
+        countryCode:
+          type: string
+          example: NL
+          minLength: 1
+          pattern: "[A-Za-z]{2}"
+      required:
+      - city
+      - countryCode
+      - houseNumber
+      - postalCode
+      - street
+    RegisterRequest:
+      type: object
+      description: Details required to create a customer and current account
+      properties:
+        fullName:
+          type: string
+          example: Ada Lovelace
+          maxLength: 100
+          minLength: 2
+        username:
+          type: string
+          example: ada.lovelace
+          maxLength: 50
+          minLength: 3
+          pattern: "[A-Za-z0-9._-]+"
+        dateOfBirth:
+          type: string
+          format: date
+          example: 1990-12-10
+        address:
+          $ref: "#/components/schemas/AddressRequest"
+      required:
+      - address
+      - dateOfBirth
+      - fullName
+      - username
+    RegisterResponse:
+      type: object
+      description: Credential returned once immediately after registration
+      properties:
+        username:
+          type: string
+          example: ada.lovelace
+        defaultPassword:
+          type: string
+          example: c29tZVJhbmRvbV8x
+    FieldErrorResponse:
+      type: object
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+    ProblemResponse:
+      type: object
+      description: RFC 9457-style application problem
+      properties:
+        type:
+          type: string
+          example: urn:problem:validation-error
+        title:
+          type: string
+          example: Request validation failed
+        status:
+          type: integer
+          format: int32
+          example: 400
+        detail:
+          type: string
+          example: One or more fields are invalid.
+        instance:
+          type: string
+          example: /register
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        timestamp:
+          type: string
+          format: date-time
+          example: 2026-08-27T12:00:00Z
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/FieldErrorResponse"
+    LoginRequest:
+      type: object
+      description: Username and generated default password
+      properties:
+        username:
+          type: string
+          example: ada.lovelace
+          maxLength: 50
+          minLength: 3
+          pattern: "[A-Za-z0-9._-]+"
+        password:
+          type: string
+          example: c29tZVJhbmRvbV8x
+          maxLength: 100
+          minLength: 0
+      required:
+      - password
+      - username
+    LoginResponse:
+      type: object
+      description: Signed bearer token
+      properties:
+        accessToken:
+          type: string
+          example: eyJ...
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          format: int64
+          example: 900
+    OverviewResponse:
+      type: object
+      description: Current account overview
+      properties:
+        accountNumber:
+          type: string
+          example: NL91RBNK0123456789
+          pattern: "NL[0-9]{2}[A-Z]{4}[0-9]{10}"
+        accountType:
+          type: string
+          enum:
+          - CURRENT
+          example: CURRENT
+        balance:
+          type: number
+          example: 0.0
+        currency:
+          type: string
+          example: EUR
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
