@@ -1,0 +1,9 @@
+{
+  "info": {"name": "Customer Onboarding", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"},
+  "variable": [{"key": "baseUrl", "value": "http://localhost:8080"}, {"key": "username", "value": "ada-{{$timestamp}}"}],
+  "item": [
+    {"name": "Register", "request": {"method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "url": "{{baseUrl}}/register", "body": {"mode":"raw", "raw":"{\n  \"fullName\": \"Ada Lovelace\",\n  \"username\": \"{{username}}\",\n  \"dateOfBirth\": \"1990-12-10\",\n  \"address\": {\"street\": \"Keizersgracht\", \"houseNumber\": \"123A\", \"postalCode\": \"1015 CJ\", \"city\": \"Amsterdam\", \"countryCode\": \"NL\"}\n}"}}, "event": [{"listen":"test","script":{"exec":["pm.test('created', () => pm.response.to.have.status(201));","pm.collectionVariables.set('defaultPassword', pm.response.json().defaultPassword);"]}}]},
+    {"name": "Login", "request": {"method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "url": "{{baseUrl}}/login", "body": {"mode":"raw", "raw":"{\"username\":\"{{username}}\",\"password\":\"{{defaultPassword}}\"}"}}, "event": [{"listen":"test","script":{"exec":["pm.test('authenticated', () => pm.response.to.have.status(200));","pm.collectionVariables.set('accessToken', pm.response.json().accessToken);"]}}]},
+    {"name": "Overview", "request": {"method": "GET", "header": [{"key":"Authorization","value":"Bearer {{accessToken}}"}], "url": "{{baseUrl}}/overview"}}
+  ]
+}
