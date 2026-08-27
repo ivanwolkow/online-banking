@@ -1,0 +1,10 @@
+# Supplied assignment material is local-only and must not enter repository history.
+docs/Customer Onboarding Assignment.pdf
+
+# Build output
+target/
+
+# IDE and operating-system metadata
+.idea/
+*.iml
+.DS_Store
