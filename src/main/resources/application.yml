@@ -1,0 +1,44 @@
+server:
+  port: 8080
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/online_banking}
+    username: ${DB_USERNAME:online_banking}
+    password: ${DB_PASSWORD:online_banking}
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.session_factory.statement_inspector: com.example.onlinebanking.persistence.RateLimitedStatementInspector
+  flyway:
+    enabled: true
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+app:
+  clock-zone: Europe/Amsterdam
+  registration:
+    minimum-age: 18
+    allowed-countries: [NL, BE]
+  account:
+    iban-country-code: NL
+    iban-bank-code: RBNK
+    type: CURRENT
+    currency: EUR
+    initial-balance: 0.00
+  security:
+    jwt:
+      issuer: online-banking
+      ttl: 15m
+      secret-base64: ${JWT_SECRET_BASE64:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
+  database:
+    rate-limit:
+      enabled: true
+      operations-per-second: 2
+      max-wait: 5s
