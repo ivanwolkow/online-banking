@@ -1,18 +1,16 @@
 package com.example.onlinebanking.api;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class OnboardingControllerContractTest {
 
-    private final OnboardingController controller = new OnboardingController();
-
     @Test
     void exposesOnlyTheThreeContractOperations() {
-        assertThat(controller.register(null).getStatusCode()).isEqualTo(HttpStatus.NOT_IMPLEMENTED);
-        assertThat(controller.login(null).getStatusCode()).isEqualTo(HttpStatus.NOT_IMPLEMENTED);
-        assertThat(controller.overview().getStatusCode()).isEqualTo(HttpStatus.NOT_IMPLEMENTED);
+        assertThat(OnboardingController.class.getDeclaredMethods()).filteredOn(method -> method.isAnnotationPresent(PostMapping.class)).hasSize(2);
+        assertThat(OnboardingController.class.getDeclaredMethods()).filteredOn(method -> method.isAnnotationPresent(GetMapping.class)).hasSize(1);
     }
 }
