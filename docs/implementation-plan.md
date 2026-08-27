@@ -21,7 +21,7 @@ Build a Java and Spring Boot backend using Maven and PostgreSQL. The application
 - Treat usernames as case-insensitively unique.
 - Create one customer and one current account in a single transaction.
 - Generate a valid and unique Dutch IBAN using the MOD-97 checksum algorithm.
-- Generate a secure default password, return it once, and store only its BCrypt hash.
+- Generate a secure default password, return it once, and store only a strong one-way hash.
 - Return:
   - `201 Created` after successful registration.
   - `400 Bad Request` for invalid input, an unsupported country, or an underage customer.
@@ -31,7 +31,7 @@ Build a Java and Spring Boot backend using Maven and PostgreSQL. The application
 
 - Accept a username and the generated default password.
 - Normalize the username consistently with registration.
-- Verify the stored BCrypt password hash.
+- Verify the stored password hash.
 - Return a short-lived signed bearer token after successful authentication.
 - Return `401 Unauthorized` for invalid credentials.
 
@@ -59,12 +59,12 @@ Build a Java and Spring Boot backend using Maven and PostgreSQL. The application
 - Store customer and account data in separate relational tables.
 - Model the assignment's one-customer-to-one-account relationship with a unique foreign key.
 - Add database-level unique constraints for normalized usernames and IBANs.
-- Generate entity identifiers in the application to avoid database sequence lookups.
+- Avoid unnecessary identifier-generation database calls; application-generated UUIDs are a sensible default.
 
 ### Authentication
 
 - Use stateless signed JWT access tokens.
-- Include the customer identifier and normalized username in the token.
+- Include the customer identifier in the token; additional non-sensitive claims are optional.
 - Make token lifetime and signing configuration external settings.
 - Validate tokens without querying the database, avoiding an additional database operation on `/overview`.
 
@@ -106,19 +106,31 @@ Build a Java and Spring Boot backend using Maven and PostgreSQL. The application
 
 ## Implementation Plan
 
+### Phase checkpoint rule
+
+Treat the numbered phases as implementation milestones. Tests should be written alongside the work in each phase rather than deferred until phase 8. After completing each phase, the implementing agent must:
+
+1. Run the tests and validation commands relevant to that phase, including `git diff --check`.
+2. Review `git status` and the complete diff for unintended or unrelated changes.
+3. Fix every failure before proceeding; a phase with failing checks is not complete.
+4. End the phase with a passing checkpoint commit whose message begins `phase N:`, where `N` is the phase number.
+5. Record the validation commands and results for the final handoff summary.
+
+Additional focused commits within a phase are allowed when useful, but do not include unfinished work from a later phase in the checkpoint. A validation-only phase may use `git commit --allow-empty` when a distinct checkpoint is useful.
+
 ### 1. Bootstrap the project
 
 - Use the existing local Git repository and preserve its assignment-document ignore rule.
 - Create the Maven and Spring Boot project structure targeting Java 21.
 - Add Spring Web, Validation, Security, Data JPA, PostgreSQL, Flyway, JWT, and test dependencies.
 - Add the Maven wrapper so the project does not depend on a preinstalled Maven version.
-- Establish package boundaries for API, application, domain, persistence, security, and configuration code.
+- Establish clear responsibility boundaries while allowing the concrete package and class layout to evolve during implementation.
 
 ### 2. Define and generate the API contract
 
 - Treat the exact schemas in the implementation specification as the design-time contract.
 - Implement request and response DTOs, validation, and controllers from that contract.
-- Add OpenAPI annotations for operations, schemas, authentication, examples, and every supported status code.
+- Add the annotations and configuration needed for the generated document to cover operations, schemas, authentication, examples, and every supported status code.
 - Generate `docs/openapi.yaml` from the running application after the controllers are implemented; do not maintain a second handwritten contract.
 - Configure Swagger UI at `/swagger-ui.html` through the documentation profile.
 - Add a contract test for the generated paths, methods, schemas, responses, and bearer security scheme.
@@ -128,14 +140,14 @@ Build a Java and Spring Boot backend using Maven and PostgreSQL. The application
 - Implement exact age calculation using an injectable clock so the 18th-birthday boundary is testable.
 - Implement configurable country eligibility using ISO country codes.
 - Normalize and validate usernames consistently.
-- Generate passwords with `SecureRandom`.
+- Generate passwords with a cryptographically secure random source.
 - Generate Dutch IBANs and validate their format and MOD-97 checksum.
 - Define the account defaults and monetary precision.
 
 ### 4. Build persistence
 
 - Add Flyway migrations for the customer and account tables, constraints, and indexes.
-- Implement repositories for registration, credential lookup, and account overview retrieval.
+- Implement repositories or equivalent persistence adapters for registration, credential lookup, and account overview retrieval.
 - Persist customer and account creation transactionally.
 - Enforce uniqueness in the database to remain correct under concurrent registrations.
 - Map the username constraint to a deterministic conflict response.
@@ -165,7 +177,9 @@ Build a Java and Spring Boot backend using Maven and PostgreSQL. The application
 - Load the authenticated customer's account overview with a focused query.
 - Prevent one customer from accessing another customer's account data.
 
-### 8. Add automated tests
+### 8. Complete automated test coverage
+
+- Review the tests added during phases 1-7 and fill any remaining coverage gaps.
 
 - Unit-test:
   - The day before, on, and after a customer's 18th birthday.
