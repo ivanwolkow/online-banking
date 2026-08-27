@@ -4,9 +4,11 @@
 
 This plan is based on the requirements in [Customer Onboarding Assignment.pdf](./Customer%20Onboarding%20Assignment.pdf).
 
+For implementation, read this plan together with the [Implementation Specification](./implementation-specification.md). The specification is authoritative where it makes a design choice more precise.
+
 ## Repository Baseline
 
-The project is currently greenfield: the workspace contains the assignment document but no application code or initialized Git repository.
+The project is greenfield: the Git repository contains planning documentation but no application code.
 
 ## Implementation Scope
 
@@ -85,7 +87,9 @@ Build a Java and Spring Boot backend using Maven and PostgreSQL. The application
 
 - Expose only `/register`, `/login`, and `/overview` as public business endpoints.
 - Implement supporting behavior as internal application services rather than additional HTTP APIs.
-- Provide the OpenAPI description as a checked-in YAML document without requiring a publicly exposed documentation endpoint.
+- Generate OpenAPI JSON and YAML from controller, DTO, validation, and security annotations with springdoc.
+- Provide Swagger UI through a documentation profile for local inspection and interactive API testing.
+- Keep runtime documentation endpoints disabled in the base configuration; enable the documentation profile by default in Docker Compose for reviewers and use it to regenerate the checked-in YAML artifact.
 
 ## Out of Scope
 
@@ -104,18 +108,20 @@ Build a Java and Spring Boot backend using Maven and PostgreSQL. The application
 
 ### 1. Bootstrap the project
 
-- Initialize the local Git repository.
+- Use the existing local Git repository and preserve its assignment-document ignore rule.
 - Create the Maven and Spring Boot project structure targeting Java 21.
 - Add Spring Web, Validation, Security, Data JPA, PostgreSQL, Flyway, JWT, and test dependencies.
 - Add the Maven wrapper so the project does not depend on a preinstalled Maven version.
 - Establish package boundaries for API, application, domain, persistence, security, and configuration code.
 
-### 2. Define the API contract
+### 2. Define and generate the API contract
 
-- Create an `openapi.yaml` specification before implementing controllers.
-- Define registration, login, overview, and problem response schemas.
-- Document authentication, validation constraints, examples, and every supported status code.
-- Implement request and response DTOs that match the specification.
+- Treat the exact schemas in the implementation specification as the design-time contract.
+- Implement request and response DTOs, validation, and controllers from that contract.
+- Add OpenAPI annotations for operations, schemas, authentication, examples, and every supported status code.
+- Generate `docs/openapi.yaml` from the running application after the controllers are implemented; do not maintain a second handwritten contract.
+- Configure Swagger UI at `/swagger-ui.html` through the documentation profile.
+- Add a contract test for the generated paths, methods, schemas, responses, and bearer security scheme.
 
 ### 3. Implement domain rules
 
@@ -183,6 +189,7 @@ Build a Java and Spring Boot backend using Maven and PostgreSQL. The application
 - Cover success, validation, duplicate, authentication, and authorization scenarios in the collection.
 - Add a multi-stage Dockerfile.
 - Add Docker Compose configuration for the application and PostgreSQL.
+- Activate the documentation profile in Docker Compose so Swagger UI is available to reviewers by default.
 - Write a README covering prerequisites, local execution, Docker execution, tests, configuration, sample requests, and design decisions.
 - Document the single-replica interpretation of the legacy database constraint.
 
@@ -191,7 +198,8 @@ Build a Java and Spring Boot backend using Maven and PostgreSQL. The application
 - Run the complete unit and integration test suite.
 - Build the production application artifact.
 - Start the Docker Compose stack from a clean state and run an API smoke test.
-- Validate the OpenAPI YAML document.
+- Regenerate `docs/openapi.yaml` from the final application and validate the generated document.
+- Confirm that Swagger UI loads and can authorize with the login bearer token.
 - Import and run the Postman collection against the containerized application.
 - Check source formatting and dependency hygiene.
 - Scan all repository content for prohibited organization references before handoff.
@@ -206,6 +214,7 @@ Implementation is complete when:
 - The overview endpoint cannot be used without successful authentication.
 - Concurrent tests demonstrate that runtime database operations respect the two-per-second limit.
 - The application and PostgreSQL start successfully through Docker Compose.
-- The OpenAPI document and Postman collection cover the implemented behavior.
+- The annotation-generated OpenAPI document and Postman collection cover the implemented behavior.
+- Swagger UI is available in the documented local/Docker profile and disabled in the base configuration.
 - The README provides repeatable local run and test instructions.
 - The full automated test suite and final container smoke test pass.
