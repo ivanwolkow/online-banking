@@ -8,16 +8,32 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import com.example.onlinebanking.service.AuthenticationService;
+import com.example.onlinebanking.service.OverviewService;
+import com.example.onlinebanking.service.RegistrationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+
+import java.util.UUID;
 
 @RestController
 @Tag(name = "Customer onboarding")
 public class OnboardingController {
+    private final RegistrationService registrations;
+    private final AuthenticationService authentication;
+    private final OverviewService overviews;
+
+    public OnboardingController(RegistrationService registrations, AuthenticationService authentication, OverviewService overviews) {
+        this.registrations = registrations;
+        this.authentication = authentication;
+        this.overviews = overviews;
+    }
 
     @PostMapping("/register")
     @Operation(summary = "Register a customer and current account")
@@ -29,7 +45,7 @@ public class OnboardingController {
             @ApiResponse(responseCode = "503", description = "Database busy", content = @Content(schema = @Schema(implementation = ProblemResponse.class)))
     })
     public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(registrations.register(request));
     }
 
     @PostMapping("/login")
@@ -41,7 +57,7 @@ public class OnboardingController {
             @ApiResponse(responseCode = "503", description = "Database busy", content = @Content(schema = @Schema(implementation = ProblemResponse.class)))
     })
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.ok(authentication.login(request));
     }
 
     @GetMapping("/overview")
@@ -52,7 +68,7 @@ public class OnboardingController {
             @ApiResponse(responseCode = "404", description = "Account not found", content = @Content(schema = @Schema(implementation = ProblemResponse.class))),
             @ApiResponse(responseCode = "503", description = "Database busy", content = @Content(schema = @Schema(implementation = ProblemResponse.class)))
     })
-    public ResponseEntity<OverviewResponse> overview() {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+    public ResponseEntity<OverviewResponse> overview(@AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(overviews.overview(UUID.fromString(jwt.getSubject())));
     }
 }
