@@ -17,10 +17,10 @@ import java.util.List;
 @ConfigurationProperties("app")
 public record AppProperties(
         @NotBlank String clockZone,
-        @Valid Registration registration,
-        @Valid Account account,
-        @Valid Security security,
-        @Valid Database database) {
+        @NotNull @Valid Registration registration,
+        @NotNull @Valid Account account,
+        @NotNull @Valid Security security,
+        @NotNull @Valid Database database) {
     public record Registration(
             @Min(1) int minimumAge,
             @NotEmpty List<@NotBlank String> allowedCountries
@@ -32,11 +32,11 @@ public record AppProperties(
             @NotBlank String ibanBankCode,
             @NotBlank String type,
             @NotBlank String currency,
-            BigDecimal initialBalance
+            @NotNull BigDecimal initialBalance
     ) {
     }
 
-    public record Security(@Valid Jwt jwt) {
+    public record Security(@NotNull @Valid Jwt jwt) {
     }
 
     public record Jwt(@NotBlank String issuer, @NotNull Duration ttl, @NotBlank String secretBase64) {
@@ -46,7 +46,7 @@ public record AppProperties(
             }
         }
     }
-    public record Database(@Valid RateLimit rateLimit) {
+    public record Database(@NotNull @Valid RateLimit rateLimit) {
     }
 
     public record RateLimit(boolean enabled, @Positive int operationsPerSecond, @NotNull Duration maxWait) {

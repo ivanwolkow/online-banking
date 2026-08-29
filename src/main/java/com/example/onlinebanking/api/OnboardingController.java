@@ -55,22 +55,34 @@ public class OnboardingController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Malformed, invalid, underage, or unsupported-country request",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class))
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                            schema = @Schema(implementation = ProblemResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "409",
                     description = "Username already exists",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class))
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                            schema = @Schema(implementation = ProblemResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "Account-number generation failed",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class))
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                            schema = @Schema(implementation = ProblemResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "503",
                     description = "Database busy",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class))
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                            schema = @Schema(implementation = ProblemResponse.class)
+                    )
             )
     })
     public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -92,17 +104,26 @@ public class OnboardingController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Malformed or invalid request",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class))
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                            schema = @Schema(implementation = ProblemResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "Invalid credentials",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class))
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                            schema = @Schema(implementation = ProblemResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "503",
                     description = "Database busy",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class))
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                            schema = @Schema(implementation = ProblemResponse.class)
+                    )
             )
     })
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
@@ -123,17 +144,26 @@ public class OnboardingController {
             @ApiResponse(
                     responseCode = "401",
                     description = "Authentication is required or token is invalid",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class))
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                            schema = @Schema(implementation = ProblemResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "Account not found",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class))
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                            schema = @Schema(implementation = ProblemResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "503",
                     description = "Database busy",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class))
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                            schema = @Schema(implementation = ProblemResponse.class)
+                    )
             )
     })
     public ResponseEntity<OverviewResponse> overview(@AuthenticationPrincipal Jwt jwt) {

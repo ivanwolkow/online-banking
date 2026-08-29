@@ -1,5 +1,6 @@
 package com.example.onlinebanking.api;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
@@ -14,6 +15,7 @@ public record ProblemResponse(
         @Schema(example = "/register") String instance,
         @Schema(example = "VALIDATION_ERROR") String code,
         @Schema(example = "2026-08-27T12:00:00Z") Instant timestamp,
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
         List<FieldErrorResponse> errors) {
 
     public record FieldErrorResponse(String field, String message) {

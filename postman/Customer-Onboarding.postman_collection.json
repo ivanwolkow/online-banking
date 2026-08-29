@@ -1,9 +1,193 @@
 {
-  "info": {"name": "Customer Onboarding", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"},
-  "variable": [{"key": "baseUrl", "value": "http://localhost:8080"}, {"key": "username", "value": "ada-{{$timestamp}}"}],
+  "info": {
+    "name": "Customer Onboarding",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:8080"},
+    {"key": "username", "value": ""},
+    {"key": "defaultPassword", "value": ""},
+    {"key": "accessToken", "value": ""}
+  ],
   "item": [
-    {"name": "Register", "request": {"method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "url": "{{baseUrl}}/register", "body": {"mode":"raw", "raw":"{\n  \"fullName\": \"Ada Lovelace\",\n  \"username\": \"{{username}}\",\n  \"dateOfBirth\": \"1990-12-10\",\n  \"address\": {\"street\": \"Keizersgracht\", \"houseNumber\": \"123A\", \"postalCode\": \"1015 CJ\", \"city\": \"Amsterdam\", \"countryCode\": \"NL\"}\n}"}}, "event": [{"listen":"test","script":{"exec":["pm.test('created', () => pm.response.to.have.status(201));","pm.collectionVariables.set('defaultPassword', pm.response.json().defaultPassword);"]}}]},
-    {"name": "Login", "request": {"method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "url": "{{baseUrl}}/login", "body": {"mode":"raw", "raw":"{\"username\":\"{{username}}\",\"password\":\"{{defaultPassword}}\"}"}}, "event": [{"listen":"test","script":{"exec":["pm.test('authenticated', () => pm.response.to.have.status(200));","pm.collectionVariables.set('accessToken', pm.response.json().accessToken);"]}}]},
-    {"name": "Overview", "request": {"method": "GET", "header": [{"key":"Authorization","value":"Bearer {{accessToken}}"}], "url": "{{baseUrl}}/overview"}}
+    {
+      "name": "Happy path",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"  Ada Lovelace  \",\n  \"username\": \"  {{username}}  \",\n  \"dateOfBirth\": \"1990-12-10\",\n  \"address\": {\n    \"street\": \"  Keizersgracht  \",\n    \"houseNumber\": \"  123A  \",\n    \"postalCode\": \"  1015 CJ  \",\n    \"city\": \"  Amsterdam  \",\n    \"countryCode\": \"  nl  \"\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {"exec": ["pm.collectionVariables.set('username', `ada-${Date.now()}`);"]}
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('created', () => pm.response.to.have.status(201));",
+                  "pm.test('username is normalized', () => pm.expect(pm.response.json().username).to.eql(pm.collectionVariables.get('username').toLowerCase()));",
+                  "pm.collectionVariables.set('defaultPassword', pm.response.json().defaultPassword);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"  {{username}}  \",\"password\":\"{{defaultPassword}}\"}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('authenticated', () => pm.response.to.have.status(200));",
+                "pm.collectionVariables.set('accessToken', pm.response.json().accessToken);"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Overview",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{baseUrl}}/overview"
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('overview returned', () => pm.response.to.have.status(200));",
+                "pm.test('current EUR account returned', () => { const body = pm.response.json(); pm.expect(body.accountType).to.eql('CURRENT'); pm.expect(body.currency).to.eql('EUR'); });"
+              ]
+            }
+          }]
+        }
+      ]
+    },
+    {
+      "name": "Failure scenarios",
+      "item": [
+        {
+          "name": "Duplicate username",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fullName\":\"Grace Hopper\",\"username\":\"{{username}}\",\"dateOfBirth\":\"1906-12-09\",\"address\":{\"street\":\"Keizersgracht\",\"houseNumber\":\"1\",\"postalCode\":\"1015 CJ\",\"city\":\"Amsterdam\",\"countryCode\":\"NL\"}}"
+            }
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "pm.test('conflict problem returned', () => { pm.response.to.have.status(409); pm.expect(pm.response.json().code).to.eql('USERNAME_ALREADY_EXISTS'); });",
+            "pm.test('problem media type', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json'));"
+          ]}}]
+        },
+        {
+          "name": "Validation after trimming",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fullName\":\"Ada\",\"username\":\"  ab  \",\"dateOfBirth\":\"1990-12-10\",\"address\":{\"street\":\"Street\",\"houseNumber\":\"1\",\"postalCode\":\"1000 AA\",\"city\":\"Amsterdam\",\"countryCode\":\"NL\"}}"
+            }
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "pm.test('validation problem returned', () => { pm.response.to.have.status(400); const body = pm.response.json(); pm.expect(body.code).to.eql('VALIDATION_ERROR'); pm.expect(body.errors).to.be.an('array').that.is.not.empty; });"
+          ]}}]
+        },
+        {
+          "name": "Unknown property",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/login",
+            "body": {"mode": "raw", "raw": "{\"username\":\"{{username}}\",\"password\":\"x\",\"unexpected\":true}"}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "pm.test('malformed request problem returned', () => { pm.response.to.have.status(400); pm.expect(pm.response.json().code).to.eql('MALFORMED_REQUEST'); });"
+          ]}}]
+        },
+        {
+          "name": "Underage customer",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fullName\":\"Young Customer\",\"username\":\"young-{{$timestamp}}\",\"dateOfBirth\":\"2020-01-01\",\"address\":{\"street\":\"Street\",\"houseNumber\":\"1\",\"postalCode\":\"1000 AA\",\"city\":\"Amsterdam\",\"countryCode\":\"NL\"}}"
+            }
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "pm.test('underage problem returned', () => { pm.response.to.have.status(400); pm.expect(pm.response.json().code).to.eql('CUSTOMER_UNDERAGE'); });"
+          ]}}]
+        },
+        {
+          "name": "Unsupported country",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fullName\":\"Ada Lovelace\",\"username\":\"country-{{$timestamp}}\",\"dateOfBirth\":\"1990-12-10\",\"address\":{\"street\":\"Street\",\"houseNumber\":\"1\",\"postalCode\":\"1000 AA\",\"city\":\"Amsterdam\",\"countryCode\":\"US\"}}"
+            }
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "pm.test('country problem returned', () => { pm.response.to.have.status(400); pm.expect(pm.response.json().code).to.eql('COUNTRY_NOT_ALLOWED'); });"
+          ]}}]
+        },
+        {
+          "name": "Invalid credentials",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/login",
+            "body": {"mode": "raw", "raw": "{\"username\":\"{{username}}\",\"password\":\"wrong-password\"}"}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "pm.test('credentials problem returned', () => { pm.response.to.have.status(401); pm.expect(pm.response.json().code).to.eql('INVALID_CREDENTIALS'); });"
+          ]}}]
+        },
+        {
+          "name": "Overview without token",
+          "request": {"method": "GET", "url": "{{baseUrl}}/overview"},
+          "event": [{"listen": "test", "script": {"exec": [
+            "pm.test('authentication required', () => { pm.response.to.have.status(401); pm.expect(pm.response.json().code).to.eql('AUTHENTICATION_REQUIRED'); });"
+          ]}}]
+        },
+        {
+          "name": "Overview with invalid token",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer invalid"}],
+            "url": "{{baseUrl}}/overview"
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "pm.test('invalid token problem returned', () => { pm.response.to.have.status(401); pm.expect(pm.response.json().code).to.eql('INVALID_TOKEN'); });"
+          ]}}]
+        }
+      ]
+    }
   ]
 }

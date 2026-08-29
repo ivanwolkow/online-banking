@@ -36,7 +36,7 @@ app:
     jwt:
       issuer: online-banking
       ttl: 15m
-      secret-base64: ${JWT_SECRET_BASE64:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
+      secret-base64: ${JWT_SECRET_BASE64}
   database:
     rate-limit:
       enabled: true

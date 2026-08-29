@@ -12,4 +12,16 @@ public record AddressRequest(
         @NotBlank @Size(max = 20) @Schema(example = "1015 CJ") String postalCode,
         @NotBlank @Size(max = 100) @Schema(example = "Amsterdam") String city,
         @NotBlank @Pattern(regexp = "[A-Za-z]{2}") @Schema(example = "NL") String countryCode) {
+
+    public AddressRequest {
+        street = trim(street);
+        houseNumber = trim(houseNumber);
+        postalCode = trim(postalCode);
+        city = trim(city);
+        countryCode = trim(countryCode);
+    }
+
+    private static String trim(String value) {
+        return value == null ? null : value.trim();
+    }
 }

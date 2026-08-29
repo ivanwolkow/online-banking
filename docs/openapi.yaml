@@ -28,25 +28,25 @@ paths:
         "400":
           description: "Malformed, invalid, underage, or unsupported-country request"
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemResponse"
         "409":
           description: Username already exists
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemResponse"
         "500":
           description: Account-number generation failed
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemResponse"
         "503":
           description: Database busy
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemResponse"
   /login:
@@ -71,19 +71,19 @@ paths:
         "400":
           description: Malformed or invalid request
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemResponse"
         "401":
           description: Invalid credentials
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemResponse"
         "503":
           description: Database busy
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemResponse"
   /overview:
@@ -102,19 +102,19 @@ paths:
         "401":
           description: Authentication is required or token is invalid
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemResponse"
         "404":
           description: Account not found
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemResponse"
         "503":
           description: Database busy
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemResponse"
       security:
@@ -244,7 +244,7 @@ components:
           type: string
           example: c29tZVJhbmRvbV8x
           maxLength: 100
-          minLength: 0
+          minLength: 1
       required:
       - password
       - username

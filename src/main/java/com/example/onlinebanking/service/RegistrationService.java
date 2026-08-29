@@ -16,6 +16,7 @@ import com.example.onlinebanking.service.exception.AccountNumberGenerationFailed
 import com.example.onlinebanking.service.exception.CountryNotAllowedException;
 import com.example.onlinebanking.service.exception.CustomerUnderageException;
 import com.example.onlinebanking.service.exception.UsernameAlreadyExistsException;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -59,7 +60,7 @@ public class RegistrationService {
 
     public RegisterResponse register(RegisterRequest request) {
         String username = UsernameNormalizer.normalize(request.username());
-        String country = request.address().countryCode().trim().toUpperCase(Locale.ROOT);
+        String country = request.address().countryCode().toUpperCase(Locale.ROOT);
 
         if (!AgeEligibility.isEligible(request.dateOfBirth(), properties.registration().minimumAge(), clock)) {
             throw new CustomerUnderageException();
@@ -98,14 +99,14 @@ public class RegistrationService {
         AddressRequest address = request.address();
         Customer customer = new Customer(
                 UUID.randomUUID(),
-                request.fullName().trim(),
+                request.fullName(),
                 username,
                 hash,
                 request.dateOfBirth(),
-                address.street().trim(),
-                address.houseNumber().trim(),
-                address.postalCode().trim(),
-                address.city().trim(),
+                address.street(),
+                address.houseNumber(),
+                address.postalCode(),
+                address.city(),
                 country
         );
         customers.save(customer);
@@ -122,19 +123,21 @@ public class RegistrationService {
     }
 
     private static boolean isUsernameConflict(Exception exception) {
-        return message(exception).contains("uk_customers_username");
+        return hasConstraint(exception, "uk_customers_username");
     }
 
     private static boolean isIbanConflict(Exception exception) {
-        return message(exception).contains("uk_accounts_iban");
+        return hasConstraint(exception, "uk_accounts_iban");
     }
 
-    private static String message(Throwable exception) {
-        StringBuilder result = new StringBuilder();
+    private static boolean hasConstraint(Throwable exception, String expectedName) {
         for (Throwable current = exception; current != null; current = current.getCause()) {
-            result.append(current.getMessage()).append(' ');
+            if (current instanceof ConstraintViolationException violation
+                    && expectedName.equalsIgnoreCase(violation.getConstraintName())) {
+                return true;
+            }
         }
 
-        return result.toString().toLowerCase(Locale.ROOT);
+        return false;
     }
 }

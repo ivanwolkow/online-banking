@@ -17,4 +17,13 @@ public record RegisterRequest(
         @Schema(example = "ada.lovelace") String username,
         @NotNull @JsonFormat(pattern = "yyyy-MM-dd") @Schema(example = "1990-12-10") LocalDate dateOfBirth,
         @NotNull @Valid AddressRequest address) {
+
+    public RegisterRequest {
+        fullName = trim(fullName);
+        username = trim(username);
+    }
+
+    private static String trim(String value) {
+        return value == null ? null : value.trim();
+    }
 }

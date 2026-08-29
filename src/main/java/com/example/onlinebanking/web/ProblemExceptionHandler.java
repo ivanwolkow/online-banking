@@ -8,6 +8,8 @@ import com.example.onlinebanking.service.exception.DomainException;
 import com.example.onlinebanking.service.exception.InvalidCredentialsException;
 import com.example.onlinebanking.service.exception.UsernameAlreadyExistsException;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,6 +25,8 @@ import java.util.Locale;
 
 @RestControllerAdvice
 public class ProblemExceptionHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProblemExceptionHandler.class);
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ProblemResponse> validation(MethodArgumentNotValidException exception, HttpServletRequest request) {
         List<ProblemResponse.FieldErrorResponse> errors = exception.getBindingResult().getFieldErrors().stream()
@@ -77,6 +81,8 @@ public class ProblemExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<ProblemResponse> unexpected(Exception exception, HttpServletRequest request) {
+        LOGGER.error("Unexpected error while handling {}", request.getRequestURI(), exception);
+
         return response(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "INTERNAL_ERROR",
