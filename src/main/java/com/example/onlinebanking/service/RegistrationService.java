@@ -1,18 +1,14 @@
 package com.example.onlinebanking.service;
 
-import com.example.onlinebanking.model.AddressRequest;
-import com.example.onlinebanking.model.RegisterRequest;
-import com.example.onlinebanking.model.RegisterResponse;
 import com.example.onlinebanking.config.AppProperties;
 import com.example.onlinebanking.exception.AccountNumberGenerationFailedException;
 import com.example.onlinebanking.exception.CountryNotAllowedException;
 import com.example.onlinebanking.exception.CustomerUnderageException;
 import com.example.onlinebanking.exception.UsernameAlreadyExistsException;
-import com.example.onlinebanking.persistence.Account;
-import com.example.onlinebanking.persistence.AccountRepository;
-import com.example.onlinebanking.persistence.Customer;
-import com.example.onlinebanking.persistence.CustomerRepository;
-import com.example.onlinebanking.persistence.DatabaseOperationGate;
+import com.example.onlinebanking.model.AddressRequest;
+import com.example.onlinebanking.model.RegisterRequest;
+import com.example.onlinebanking.model.RegisterResponse;
+import com.example.onlinebanking.persistence.*;
 import org.hibernate.exception.ConstraintViolationException;
 import org.iban4j.CountryCode;
 import org.iban4j.Iban;
@@ -94,9 +90,10 @@ public class RegistrationService {
                 if (isUsernameConflict(exception)) {
                     throw new UsernameAlreadyExistsException();
                 }
-                if (!isIbanConflict(exception)) {
-                    throw exception;
+                if (isIbanConflict(exception)) {
+                    continue;
                 }
+                throw exception;
             }
         }
 
@@ -150,11 +147,11 @@ public class RegistrationService {
     }
 
     private static boolean isUsernameConflict(Exception exception) {
-        return hasConstraint(exception, "uk_customers_username");
+        return hasConstraint(exception, SchemaConstraints.CUSTOMER_USERNAME_UNIQUE);
     }
 
     private static boolean isIbanConflict(Exception exception) {
-        return hasConstraint(exception, "uk_accounts_iban");
+        return hasConstraint(exception, SchemaConstraints.ACCOUNT_IBAN_UNIQUE);
     }
 
     private static boolean hasConstraint(Throwable exception, String expectedName) {

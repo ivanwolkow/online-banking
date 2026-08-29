@@ -6,22 +6,35 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "accounts")
+@Table(
+        name = "accounts",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = SchemaConstraints.ACCOUNT_CUSTOMER_UNIQUE,
+                        columnNames = "customer_id"
+                ),
+                @UniqueConstraint(
+                        name = SchemaConstraints.ACCOUNT_IBAN_UNIQUE,
+                        columnNames = "iban"
+                )
+        }
+)
 public class Account {
     @Id
     private UUID id;
 
     @OneToOne(optional = false)
-    @JoinColumn(name = "customer_id", nullable = false, unique = true)
+    @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
-    @Column(nullable = false, unique = true, length = 18)
+    @Column(nullable = false, length = 18)
     private String iban;
 
     @Column(name = "account_type", nullable = false, length = 20)
