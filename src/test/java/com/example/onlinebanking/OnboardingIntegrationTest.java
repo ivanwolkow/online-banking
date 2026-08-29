@@ -1,8 +1,8 @@
 package com.example.onlinebanking;
 
-import com.example.onlinebanking.domain.IbanGenerator;
 import com.example.onlinebanking.persistence.AccountRepository;
 import com.example.onlinebanking.persistence.CustomerRepository;
+import org.iban4j.IbanUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +11,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -28,6 +29,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers
+@ActiveProfiles("docs")
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
@@ -125,7 +127,7 @@ class OnboardingIntegrationTest {
         JsonNode overview = json(overviewResponse);
         String accountNumber = overview.path("accountNumber").asString();
         assertThat(accountNumber).matches("^NL[0-9]{2}RBNK[0-9]{10}$");
-        assertThat(IbanGenerator.isValid(accountNumber)).isTrue();
+        assertThat(IbanUtil.isValid(accountNumber)).isTrue();
         assertThat(overview.path("accountType").asString()).isEqualTo("CURRENT");
         assertThat(overview.path("balance").decimalValue()).isEqualByComparingTo("0.00");
         assertThat(overview.path("currency").asString()).isEqualTo("EUR");
@@ -182,6 +184,31 @@ class OnboardingIntegrationTest {
 
         assertProblem(get("/overview", null), 401, "AUTHENTICATION_REQUIRED", false);
         assertProblem(get("/overview", "Bearer invalid"), 401, "INVALID_TOKEN", false);
+    }
+
+    @Test
+    void documentationEndpointsAreAvailableWithoutAuthentication() throws Exception {
+        HttpResponse<String> apiDocs = get("/v3/api-docs", null);
+        assertThat(apiDocs.statusCode()).isEqualTo(200);
+        JsonNode contract = json(apiDocs);
+        assertThat(contract.path("openapi").asString()).isEqualTo("3.1.0");
+        assertJsonSuccessResponse(contract, "/register", "post", "201");
+        assertJsonSuccessResponse(contract, "/login", "post", "200");
+        assertJsonSuccessResponse(contract, "/overview", "get", "200");
+
+        HttpResponse<String> swaggerUi = get("/swagger-ui.html", null);
+        assertThat(swaggerUi.statusCode()).isIn(200, 302);
+    }
+
+    private static void assertJsonSuccessResponse(JsonNode contract, String path, String method, String status) {
+        JsonNode content = contract.path("paths")
+                .path(path)
+                .path(method)
+                .path("responses")
+                .path(status)
+                .path("content");
+
+        assertThat(content.has(MediaType.APPLICATION_JSON_VALUE)).isTrue();
     }
 
     private HttpResponse<String> post(String path, String body) throws Exception {

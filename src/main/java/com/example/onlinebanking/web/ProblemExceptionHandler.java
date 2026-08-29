@@ -1,12 +1,12 @@
 package com.example.onlinebanking.web;
 
 import com.example.onlinebanking.api.ProblemResponse;
+import com.example.onlinebanking.exception.AccountNotFoundException;
+import com.example.onlinebanking.exception.AccountNumberGenerationFailedException;
+import com.example.onlinebanking.exception.DomainException;
+import com.example.onlinebanking.exception.InvalidCredentialsException;
+import com.example.onlinebanking.exception.UsernameAlreadyExistsException;
 import com.example.onlinebanking.persistence.DatabaseBusyException;
-import com.example.onlinebanking.service.exception.AccountNotFoundException;
-import com.example.onlinebanking.service.exception.AccountNumberGenerationFailedException;
-import com.example.onlinebanking.service.exception.DomainException;
-import com.example.onlinebanking.service.exception.InvalidCredentialsException;
-import com.example.onlinebanking.service.exception.UsernameAlreadyExistsException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

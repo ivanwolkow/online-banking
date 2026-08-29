@@ -19,6 +19,7 @@
 
     <properties>
         <java.version>21</java.version>
+        <iban4j.version>3.2.14-RELEASE</iban4j.version>
         <springdoc.version>3.1.0</springdoc.version>
         <maven.compiler.release>21</maven.compiler.release>
     </properties>
@@ -51,6 +52,11 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.iban4j</groupId>
+            <artifactId>iban4j</artifactId>
+            <version>${iban4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>

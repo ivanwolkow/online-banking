@@ -3,10 +3,9 @@ package com.example.onlinebanking.service;
 import com.example.onlinebanking.api.LoginRequest;
 import com.example.onlinebanking.api.LoginResponse;
 import com.example.onlinebanking.config.AppProperties;
-import com.example.onlinebanking.domain.UsernameNormalizer;
+import com.example.onlinebanking.exception.InvalidCredentialsException;
 import com.example.onlinebanking.persistence.Customer;
 import com.example.onlinebanking.persistence.CustomerRepository;
-import com.example.onlinebanking.service.exception.InvalidCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
@@ -17,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Locale;
 
 @Service
 public class AuthenticationService {
@@ -41,7 +41,7 @@ public class AuthenticationService {
     }
 
     public LoginResponse login(LoginRequest request) {
-        String username = UsernameNormalizer.normalize(request.username());
+        String username = request.username().trim().toLowerCase(Locale.ROOT);
         Customer customer = customers.findByUsername(username).orElse(null);
 
         if (customer == null || !encoder.matches(request.password(), customer.getPasswordHash())) {

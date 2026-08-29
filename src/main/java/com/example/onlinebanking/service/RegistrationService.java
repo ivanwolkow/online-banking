@@ -4,25 +4,26 @@ import com.example.onlinebanking.api.AddressRequest;
 import com.example.onlinebanking.api.RegisterRequest;
 import com.example.onlinebanking.api.RegisterResponse;
 import com.example.onlinebanking.config.AppProperties;
-import com.example.onlinebanking.domain.AgeEligibility;
-import com.example.onlinebanking.domain.IbanGenerator;
-import com.example.onlinebanking.domain.PasswordGenerator;
-import com.example.onlinebanking.domain.UsernameNormalizer;
+import com.example.onlinebanking.exception.AccountNumberGenerationFailedException;
+import com.example.onlinebanking.exception.CountryNotAllowedException;
+import com.example.onlinebanking.exception.CustomerUnderageException;
+import com.example.onlinebanking.exception.UsernameAlreadyExistsException;
 import com.example.onlinebanking.persistence.Account;
 import com.example.onlinebanking.persistence.AccountRepository;
 import com.example.onlinebanking.persistence.Customer;
 import com.example.onlinebanking.persistence.CustomerRepository;
-import com.example.onlinebanking.service.exception.AccountNumberGenerationFailedException;
-import com.example.onlinebanking.service.exception.CountryNotAllowedException;
-import com.example.onlinebanking.service.exception.CustomerUnderageException;
-import com.example.onlinebanking.service.exception.UsernameAlreadyExistsException;
 import org.hibernate.exception.ConstraintViolationException;
+import org.iban4j.CountryCode;
+import org.iban4j.Iban;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.security.SecureRandom;
 import java.time.Clock;
+import java.time.LocalDate;
+import java.util.Base64;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -34,9 +35,8 @@ public class RegistrationService {
     private final TransactionTemplate transactions;
     private final AppProperties properties;
     private final Clock clock;
-    private final PasswordGenerator passwords;
     private final PasswordEncoder encoder;
-    private final IbanGenerator ibans;
+    private final SecureRandom random;
 
     public RegistrationService(
             CustomerRepository customers,
@@ -44,25 +44,23 @@ public class RegistrationService {
             TransactionTemplate transactions,
             AppProperties properties,
             Clock clock,
-            PasswordGenerator passwords,
             PasswordEncoder encoder,
-            IbanGenerator ibans
+            SecureRandom random
     ) {
         this.customers = customers;
         this.accounts = accounts;
         this.transactions = transactions;
         this.properties = properties;
         this.clock = clock;
-        this.passwords = passwords;
         this.encoder = encoder;
-        this.ibans = ibans;
+        this.random = random;
     }
 
     public RegisterResponse register(RegisterRequest request) {
-        String username = UsernameNormalizer.normalize(request.username());
+        String username = request.username().trim().toLowerCase(Locale.ROOT);
         String country = request.address().countryCode().toUpperCase(Locale.ROOT);
 
-        if (!AgeEligibility.isEligible(request.dateOfBirth(), properties.registration().minimumAge(), clock)) {
+        if (isUnderage(request.dateOfBirth(), properties.registration().minimumAge(), clock)) {
             throw new CustomerUnderageException();
         }
 
@@ -73,12 +71,16 @@ public class RegistrationService {
             throw new CountryNotAllowedException();
         }
 
-        String password = passwords.generate();
+        String password = generatePassword(random);
         String hash = encoder.encode(password);
 
         for (int attempt = 0; attempt < IBAN_ATTEMPTS; attempt++) {
             try {
-                String iban = ibans.generate();
+                String iban = generateIban(
+                        properties.account().ibanCountryCode(),
+                        properties.account().ibanBankCode(),
+                        random
+                );
                 transactions.executeWithoutResult(status -> persist(request, username, country, hash, iban));
 
                 return new RegisterResponse(username, password);
@@ -93,6 +95,25 @@ public class RegistrationService {
         }
 
         throw new AccountNumberGenerationFailedException();
+    }
+
+    static boolean isUnderage(LocalDate dateOfBirth, int minimumAge, Clock clock) {
+        return dateOfBirth.plusYears(minimumAge).isAfter(LocalDate.now(clock));
+    }
+
+    static String generatePassword(SecureRandom random) {
+        byte[] entropy = new byte[16];
+        random.nextBytes(entropy);
+
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(entropy);
+    }
+
+    static String generateIban(String countryCode, String bankCode, SecureRandom random) {
+        return new Iban.Builder(random)
+                .countryCode(CountryCode.getByCode(countryCode.toUpperCase(Locale.ROOT)))
+                .bankCode(bankCode.toUpperCase(Locale.ROOT))
+                .buildRandom()
+                .toString();
     }
 
     private void persist(RegisterRequest request, String username, String country, String hash, String iban) {

@@ -1,4 +1,4 @@
-package com.example.onlinebanking.service.exception;
+package com.example.onlinebanking.exception;
 
 import org.junit.jupiter.api.Test;
 

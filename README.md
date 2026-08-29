@@ -37,6 +37,6 @@ curl -fsS http://localhost:8080/v3/api-docs.yaml -o docs/openapi.yaml
 
 Each Hibernate SQL statement passes through `RateLimitedStatementInspector`. By default a single application replica starts no more than two statements per second, smoothly spaced by 500ms, and returns `503 DATABASE_BUSY` after a five-second wait. Multi-replica coordination is intentionally out of scope.
 
-Registration normalizes usernames to lowercase, accepts NL/BE residences by default, verifies the exact 18th-birthday boundary, creates customer/account in one transaction, stores BCrypt-12 hashes only, and generates checksum-valid Dutch IBANs. JWT validation is stateless and the overview uses the subject claim only.
+Registration normalizes usernames to lowercase, accepts NL/BE residences by default, verifies the exact 18th-birthday boundary, creates customer/account in one transaction, stores BCrypt-12 hashes only, and uses iban4j to generate checksum-valid Dutch IBANs. JWT validation is stateless and the overview uses the subject claim only.
 
 Import `postman/Customer-Onboarding.postman_collection.json` to exercise the happy path and contract failure scenarios; it captures the generated password and bearer token automatically.

@@ -40,17 +40,16 @@ public class OnboardingController {
         this.overviews = overviews;
     }
 
-    @PostMapping(
-            value = "/register",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
+    @PostMapping("/register")
     @Operation(summary = "Register a customer and current account")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "201",
                     description = "Customer registered",
-                    content = @Content(schema = @Schema(implementation = RegisterResponse.class))
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = RegisterResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -89,17 +88,16 @@ public class OnboardingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(registrations.register(request));
     }
 
-    @PostMapping(
-            value = "/login",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
+    @PostMapping("/login")
     @Operation(summary = "Authenticate a customer")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
                     description = "Authenticated",
-                    content = @Content(schema = @Schema(implementation = LoginResponse.class))
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = LoginResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -130,7 +128,7 @@ public class OnboardingController {
         return ResponseEntity.ok(authentication.login(request));
     }
 
-    @GetMapping(value = "/overview", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping("/overview")
     @Operation(
             summary = "Get the authenticated customer's current account",
             security = @SecurityRequirement(name = "bearerAuth")
@@ -139,7 +137,10 @@ public class OnboardingController {
             @ApiResponse(
                     responseCode = "200",
                     description = "Account overview",
-                    content = @Content(schema = @Schema(implementation = OverviewResponse.class))
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = OverviewResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "401",

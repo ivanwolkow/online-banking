@@ -1,8 +1,5 @@
 package com.example.onlinebanking.config;
 
-import com.example.onlinebanking.domain.IbanGenerator;
-import com.example.onlinebanking.domain.PasswordGenerator;
-import com.example.onlinebanking.domain.SecurePasswordGenerator;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,20 +21,6 @@ public class ApplicationConfiguration {
     @Bean
     SecureRandom secureRandom() {
         return new SecureRandom();
-    }
-
-    @Bean
-    PasswordGenerator passwordGenerator(SecureRandom secureRandom) {
-        return new SecurePasswordGenerator(secureRandom);
-    }
-
-    @Bean
-    IbanGenerator ibanGenerator(AppProperties properties, SecureRandom secureRandom) {
-        return new IbanGenerator(
-                properties.account().ibanCountryCode(),
-                properties.account().ibanBankCode(),
-                secureRandom
-        );
     }
 
     @Bean
