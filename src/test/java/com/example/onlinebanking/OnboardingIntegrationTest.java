@@ -143,7 +143,7 @@ class OnboardingIntegrationTest {
                 registrationBody("Grace", "duplicate.user", "BE")
         );
 
-        assertProblem(duplicate, 409, "USERNAME_ALREADY_EXISTS", false);
+        assertProblem(duplicate, 400, "USERNAME_ALREADY_EXISTS", false);
         assertThat(customers.count()).isEqualTo(1);
         assertThat(accounts.count()).isEqualTo(1);
     }
@@ -195,6 +195,9 @@ class OnboardingIntegrationTest {
         assertJsonSuccessResponse(contract, "/register", "post", "201");
         assertJsonSuccessResponse(contract, "/login", "post", "200");
         assertJsonSuccessResponse(contract, "/overview", "get", "200");
+        assertGenericInternalError(contract, "/register", "post");
+        assertGenericInternalError(contract, "/login", "post");
+        assertGenericInternalError(contract, "/overview", "get");
 
         HttpResponse<String> swaggerUi = get("/swagger-ui.html", null);
         assertThat(swaggerUi.statusCode()).isIn(200, 302);
@@ -209,6 +212,15 @@ class OnboardingIntegrationTest {
                 .path("content");
 
         assertThat(content.has(MediaType.APPLICATION_JSON_VALUE)).isTrue();
+    }
+
+    private static void assertGenericInternalError(JsonNode contract, String path, String method) {
+        JsonNode responses = contract.path("paths").path(path).path(method).path("responses");
+
+        assertThat(responses.has("500")).isTrue();
+        assertThat(responses.has("503")).isFalse();
+        assertThat(responses.has("404")).isFalse();
+        assertThat(responses.has("409")).isFalse();
     }
 
     private HttpResponse<String> post(String path, String body) throws Exception {

@@ -25,7 +25,7 @@ Build a Java and Spring Boot backend using Maven and PostgreSQL. The application
 - Return:
   - `201 Created` after successful registration.
   - `400 Bad Request` for invalid input, an unsupported country, or an underage customer.
-  - `409 Conflict` when the normalized username already exists.
+  - `400 Bad Request` when the normalized username already exists.
 
 ### `POST /login`
 

@@ -1,5 +1,11 @@
 package com.example.onlinebanking.api;
 
+import com.example.onlinebanking.model.LoginRequest;
+import com.example.onlinebanking.model.LoginResponse;
+import com.example.onlinebanking.model.OverviewResponse;
+import com.example.onlinebanking.model.ProblemResponse;
+import com.example.onlinebanking.model.RegisterRequest;
+import com.example.onlinebanking.model.RegisterResponse;
 import com.example.onlinebanking.service.AuthenticationService;
 import com.example.onlinebanking.service.OverviewService;
 import com.example.onlinebanking.service.RegistrationService;
@@ -53,15 +59,7 @@ public class OnboardingController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Malformed, invalid, underage, or unsupported-country request",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                            schema = @Schema(implementation = ProblemResponse.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "Username already exists",
+                    description = "Malformed, invalid, or unacceptable request",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                             schema = @Schema(implementation = ProblemResponse.class)
@@ -69,15 +67,7 @@ public class OnboardingController {
             ),
             @ApiResponse(
                     responseCode = "500",
-                    description = "Account-number generation failed",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                            schema = @Schema(implementation = ProblemResponse.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "503",
-                    description = "Database busy",
+                    description = "Internal server error",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                             schema = @Schema(implementation = ProblemResponse.class)
@@ -116,8 +106,8 @@ public class OnboardingController {
                     )
             ),
             @ApiResponse(
-                    responseCode = "503",
-                    description = "Database busy",
+                    responseCode = "500",
+                    description = "Internal server error",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                             schema = @Schema(implementation = ProblemResponse.class)
@@ -151,16 +141,8 @@ public class OnboardingController {
                     )
             ),
             @ApiResponse(
-                    responseCode = "404",
-                    description = "Account not found",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
-                            schema = @Schema(implementation = ProblemResponse.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "503",
-                    description = "Database busy",
+                    responseCode = "500",
+                    description = "Internal server error",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                             schema = @Schema(implementation = ProblemResponse.class)

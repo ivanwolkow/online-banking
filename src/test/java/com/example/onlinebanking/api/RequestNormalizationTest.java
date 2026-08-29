@@ -1,5 +1,8 @@
 package com.example.onlinebanking.api;
 
+import com.example.onlinebanking.model.AddressRequest;
+import com.example.onlinebanking.model.LoginRequest;
+import com.example.onlinebanking.model.RegisterRequest;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;

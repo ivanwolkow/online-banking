@@ -1,16 +1,14 @@
 package com.example.onlinebanking.web;
 
-import com.example.onlinebanking.api.ProblemResponse;
+import com.example.onlinebanking.model.ProblemResponse;
 import com.example.onlinebanking.exception.AccountNotFoundException;
 import com.example.onlinebanking.exception.AccountNumberGenerationFailedException;
 import com.example.onlinebanking.exception.DomainException;
 import com.example.onlinebanking.exception.InvalidCredentialsException;
-import com.example.onlinebanking.exception.UsernameAlreadyExistsException;
 import com.example.onlinebanking.persistence.DatabaseBusyException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -57,6 +55,11 @@ public class ProblemExceptionHandler {
 
     @ExceptionHandler(DomainException.class)
     ResponseEntity<ProblemResponse> domain(DomainException exception, HttpServletRequest request) {
+        if (exception instanceof AccountNumberGenerationFailedException
+                || exception instanceof AccountNotFoundException) {
+            return internal(exception, request);
+        }
+
         HttpStatus status = statusFor(exception);
 
         return response(status, exception.code(), exception.title(), exception.getMessage(), request, null);
@@ -64,24 +67,16 @@ public class ProblemExceptionHandler {
 
     @ExceptionHandler(DatabaseBusyException.class)
     ResponseEntity<ProblemResponse> busy(DatabaseBusyException exception, HttpServletRequest request) {
-        ProblemResponse problem = problem(
-                HttpStatus.SERVICE_UNAVAILABLE,
-                "DATABASE_BUSY",
-                "Database busy",
-                "Please retry shortly.",
-                request,
-                null
-        );
-
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .header(HttpHeaders.RETRY_AFTER, "1")
-                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
-                .body(problem);
+        return internal(exception, request);
     }
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<ProblemResponse> unexpected(Exception exception, HttpServletRequest request) {
-        LOGGER.error("Unexpected error while handling {}", request.getRequestURI(), exception);
+        return internal(exception, request);
+    }
+
+    private ResponseEntity<ProblemResponse> internal(Exception exception, HttpServletRequest request) {
+        LOGGER.error("Internal error while handling {}", request.getRequestURI(), exception);
 
         return response(
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -109,17 +104,8 @@ public class ProblemExceptionHandler {
     }
 
     private HttpStatus statusFor(DomainException exception) {
-        if (exception instanceof UsernameAlreadyExistsException) {
-            return HttpStatus.CONFLICT;
-        }
-        if (exception instanceof AccountNotFoundException) {
-            return HttpStatus.NOT_FOUND;
-        }
         if (exception instanceof InvalidCredentialsException) {
             return HttpStatus.UNAUTHORIZED;
-        }
-        if (exception instanceof AccountNumberGenerationFailedException) {
-            return HttpStatus.INTERNAL_SERVER_ERROR;
         }
         return HttpStatus.BAD_REQUEST;
     }

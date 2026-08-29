@@ -1,8 +1,8 @@
 package com.example.onlinebanking.service;
 
-import com.example.onlinebanking.api.AddressRequest;
-import com.example.onlinebanking.api.RegisterRequest;
-import com.example.onlinebanking.api.RegisterResponse;
+import com.example.onlinebanking.model.AddressRequest;
+import com.example.onlinebanking.model.RegisterRequest;
+import com.example.onlinebanking.model.RegisterResponse;
 import com.example.onlinebanking.config.AppProperties;
 import com.example.onlinebanking.exception.AccountNumberGenerationFailedException;
 import com.example.onlinebanking.exception.CountryNotAllowedException;

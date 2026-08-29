@@ -1,7 +1,7 @@
 package com.example.onlinebanking.service;
 
-import com.example.onlinebanking.api.LoginRequest;
-import com.example.onlinebanking.api.LoginResponse;
+import com.example.onlinebanking.model.LoginRequest;
+import com.example.onlinebanking.model.LoginResponse;
 import com.example.onlinebanking.config.AppProperties;
 import com.example.onlinebanking.exception.InvalidCredentialsException;
 import com.example.onlinebanking.persistence.Customer;

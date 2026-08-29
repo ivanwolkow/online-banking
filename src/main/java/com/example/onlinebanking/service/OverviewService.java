@@ -1,6 +1,6 @@
 package com.example.onlinebanking.service;
 
-import com.example.onlinebanking.api.OverviewResponse;
+import com.example.onlinebanking.model.OverviewResponse;
 import com.example.onlinebanking.exception.AccountNotFoundException;
 import com.example.onlinebanking.persistence.Account;
 import com.example.onlinebanking.persistence.AccountRepository;

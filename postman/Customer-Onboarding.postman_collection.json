@@ -96,7 +96,7 @@
             }
           },
           "event": [{"listen": "test", "script": {"exec": [
-            "pm.test('conflict problem returned', () => { pm.response.to.have.status(409); pm.expect(pm.response.json().code).to.eql('USERNAME_ALREADY_EXISTS'); });",
+            "pm.test('unacceptable request problem returned', () => { pm.response.to.have.status(400); pm.expect(pm.response.json().code).to.eql('USERNAME_ALREADY_EXISTS'); });",
             "pm.test('problem media type', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json'));"
           ]}}]
         },

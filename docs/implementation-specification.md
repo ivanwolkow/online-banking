@@ -148,9 +148,8 @@ Registration failures:
 | 400 | `VALIDATION_ERROR` | Structural or field validation failure |
 | 400 | `CUSTOMER_UNDERAGE` | Customer has not reached age 18 |
 | 400 | `COUNTRY_NOT_ALLOWED` | Normalized country is not configured as allowed |
-| 409 | `USERNAME_ALREADY_EXISTS` | Normalized username unique constraint conflict |
-| 500 | `ACCOUNT_NUMBER_GENERATION_FAILED` | The bounded IBAN generation attempts are exhausted |
-| 503 | `DATABASE_BUSY` | A database-backed operation cannot obtain a permit before it starts |
+| 400 | `USERNAME_ALREADY_EXISTS` | Normalized username unique constraint conflict |
+| 500 | `INTERNAL_ERROR` | An internal failure occurred; implementation details are not exposed |
 
 Do not return an access token or account number from registration.
 
@@ -189,7 +188,7 @@ Login failures:
 | 400 | `MALFORMED_REQUEST` | Invalid JSON or an unknown property |
 | 400 | `VALIDATION_ERROR` | Missing or invalid field |
 | 401 | `INVALID_CREDENTIALS` | Unknown username or incorrect password |
-| 503 | `DATABASE_BUSY` | Database-backed operation cannot obtain a permit before it starts |
+| 500 | `INTERNAL_ERROR` | An internal failure occurred; implementation details are not exposed |
 
 ### Account overview
 
@@ -220,8 +219,7 @@ Overview failures:
 | --- | --- | --- |
 | 401 | `AUTHENTICATION_REQUIRED` | Bearer token is absent |
 | 401 | `INVALID_TOKEN` | Bearer token is malformed, expired, incorrectly signed, or has an invalid issuer |
-| 404 | `ACCOUNT_NOT_FOUND` | No account exists for the authenticated customer |
-| 503 | `DATABASE_BUSY` | Database-backed operation cannot obtain a permit before it starts |
+| 500 | `INTERNAL_ERROR` | An internal failure occurred; implementation details are not exposed |
 
 ### Problem response
 
@@ -245,7 +243,7 @@ Return failures as `application/problem+json`. Use this shape and omit `errors` 
 }
 ```
 
-Use `urn:problem:` plus the lower-kebab-case error code for `type`. Map unexpected exceptions to `500 INTERNAL_ERROR` with a generic detail and no stack trace.
+Use `urn:problem:` plus the lower-kebab-case error code for `type`. Map every non-actionable internal failure, including database-capacity, account-number-generation, and missing-account failures, to `500 INTERNAL_ERROR` with a generic detail and no stack trace. Record the specific cause only in logs, metrics, or tracing.
 
 ## Authentication Outcomes and Recommended JWT Defaults
 
@@ -313,7 +311,7 @@ Required outcomes:
 
 - Use one shared limiter for database-backed business operations in one application instance.
 - Acquire a permit before any persistence work begins; do not queue callers or reject a later statement in an already admitted transaction.
-- Fail fast with `503 DATABASE_BUSY` and `Retry-After: 1` when no permit is immediately available.
+- Fail fast with a generic `500 INTERNAL_ERROR` response when no permit is immediately available; do not expose the capacity mechanism to clients.
 - Keep the limiter enabled by default and make its rate externally configurable.
 - Minimize queries made by each use case and treat coordination across multiple replicas as out of scope.
 

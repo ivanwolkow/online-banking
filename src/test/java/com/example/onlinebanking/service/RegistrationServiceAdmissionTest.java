@@ -1,7 +1,7 @@
 package com.example.onlinebanking.service;
 
-import com.example.onlinebanking.api.AddressRequest;
-import com.example.onlinebanking.api.RegisterRequest;
+import com.example.onlinebanking.model.AddressRequest;
+import com.example.onlinebanking.model.RegisterRequest;
 import com.example.onlinebanking.config.AppProperties;
 import com.example.onlinebanking.persistence.AccountRepository;
 import com.example.onlinebanking.persistence.CustomerRepository;
