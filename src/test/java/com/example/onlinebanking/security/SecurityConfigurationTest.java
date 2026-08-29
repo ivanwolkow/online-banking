@@ -40,8 +40,7 @@ class SecurityConfigurationTest {
                         "app.security.jwt.issuer=online-banking",
                         "app.security.jwt.ttl=15m",
                         "app.database.rate-limit.enabled=true",
-                        "app.database.rate-limit.operations-per-second=2",
-                        "app.database.rate-limit.max-wait=5s"
+                        "app.database.rate-limit.operations-per-second=2"
                 )
                 .run(context -> {
                     assertThat(context).hasFailed();
@@ -67,7 +66,7 @@ class SecurityConfigurationTest {
                 new AppProperties.Security(
                         new AppProperties.Jwt("online-banking", Duration.ofMinutes(15), secretBase64)
                 ),
-                new AppProperties.Database(new AppProperties.RateLimit(true, 2, Duration.ofSeconds(5)))
+                new AppProperties.Database(new AppProperties.RateLimit(true, 2))
         );
     }
 }

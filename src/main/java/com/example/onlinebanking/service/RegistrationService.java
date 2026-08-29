@@ -12,6 +12,7 @@ import com.example.onlinebanking.persistence.Account;
 import com.example.onlinebanking.persistence.AccountRepository;
 import com.example.onlinebanking.persistence.Customer;
 import com.example.onlinebanking.persistence.CustomerRepository;
+import com.example.onlinebanking.persistence.DatabaseOperationGate;
 import org.hibernate.exception.ConstraintViolationException;
 import org.iban4j.CountryCode;
 import org.iban4j.Iban;
@@ -37,6 +38,7 @@ public class RegistrationService {
     private final Clock clock;
     private final PasswordEncoder encoder;
     private final SecureRandom random;
+    private final DatabaseOperationGate databaseOperations;
 
     public RegistrationService(
             CustomerRepository customers,
@@ -45,7 +47,8 @@ public class RegistrationService {
             AppProperties properties,
             Clock clock,
             PasswordEncoder encoder,
-            SecureRandom random
+            SecureRandom random,
+            DatabaseOperationGate databaseOperations
     ) {
         this.customers = customers;
         this.accounts = accounts;
@@ -54,6 +57,7 @@ public class RegistrationService {
         this.clock = clock;
         this.encoder = encoder;
         this.random = random;
+        this.databaseOperations = databaseOperations;
     }
 
     public RegisterResponse register(RegisterRequest request) {
@@ -70,6 +74,8 @@ public class RegistrationService {
         if (!countryAllowed) {
             throw new CountryNotAllowedException();
         }
+
+        databaseOperations.acquirePermit();
 
         String password = generatePassword(random);
         String hash = encoder.encode(password);

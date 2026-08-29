@@ -12,8 +12,6 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: validate
-    properties:
-      hibernate.session_factory.statement_inspector: com.example.onlinebanking.persistence.RateLimitedStatementInspector
   flyway:
     enabled: true
 springdoc:
@@ -41,4 +39,3 @@ app:
     rate-limit:
       enabled: true
       operations-per-second: 2
-      max-wait: 5s

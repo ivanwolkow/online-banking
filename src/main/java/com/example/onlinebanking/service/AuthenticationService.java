@@ -6,6 +6,7 @@ import com.example.onlinebanking.config.AppProperties;
 import com.example.onlinebanking.exception.InvalidCredentialsException;
 import com.example.onlinebanking.persistence.Customer;
 import com.example.onlinebanking.persistence.CustomerRepository;
+import com.example.onlinebanking.persistence.DatabaseOperationGate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
@@ -25,23 +26,28 @@ public class AuthenticationService {
     private final JwtEncoder jwtEncoder;
     private final AppProperties properties;
     private final Clock clock;
+    private final DatabaseOperationGate databaseOperations;
 
     public AuthenticationService(
             CustomerRepository customers,
             PasswordEncoder encoder,
             JwtEncoder jwtEncoder,
             AppProperties properties,
-            Clock clock
+            Clock clock,
+            DatabaseOperationGate databaseOperations
     ) {
         this.customers = customers;
         this.encoder = encoder;
         this.jwtEncoder = jwtEncoder;
         this.properties = properties;
         this.clock = clock;
+        this.databaseOperations = databaseOperations;
     }
 
     public LoginResponse login(LoginRequest request) {
         String username = request.username().trim().toLowerCase(Locale.ROOT);
+        databaseOperations.acquirePermit();
+
         Customer customer = customers.findByUsername(username).orElse(null);
 
         if (customer == null || !encoder.matches(request.password(), customer.getPasswordHash())) {

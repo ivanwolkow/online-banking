@@ -5,7 +5,7 @@
 This file makes the implementation plan actionable for an implementation agent. It distinguishes required outcomes from recommended defaults and example implementation choices.
 
 - Read [implementation-plan.md](./implementation-plan.md) first, then this file.
-- This file is authoritative when it makes the plan more precise.
+- The assignment PDF is authoritative. This derived specification may be revised when a design choice is not required by, or adds unnecessary complexity beyond, the assignment.
 - Treat the numbered plan phases as milestones, respecting their dependencies, and apply the phase checkpoint protocol after every phase. Write relevant tests alongside each phase.
 - Do not add public business endpoints or out-of-scope product features. Add focused implementation or test dependencies only when they are justified by the chosen design.
 - `com.example.onlinebanking` and `online-banking` are recommended package and artifact identifiers. A conventional alternative is acceptable if it is used consistently and documented.
@@ -150,7 +150,7 @@ Registration failures:
 | 400 | `COUNTRY_NOT_ALLOWED` | Normalized country is not configured as allowed |
 | 409 | `USERNAME_ALREADY_EXISTS` | Normalized username unique constraint conflict |
 | 500 | `ACCOUNT_NUMBER_GENERATION_FAILED` | The bounded IBAN generation attempts are exhausted |
-| 503 | `DATABASE_BUSY` | A database permit cannot be obtained within the configured wait limit |
+| 503 | `DATABASE_BUSY` | A database-backed operation cannot obtain a permit before it starts |
 
 Do not return an access token or account number from registration.
 
@@ -189,7 +189,7 @@ Login failures:
 | 400 | `MALFORMED_REQUEST` | Invalid JSON or an unknown property |
 | 400 | `VALIDATION_ERROR` | Missing or invalid field |
 | 401 | `INVALID_CREDENTIALS` | Unknown username or incorrect password |
-| 503 | `DATABASE_BUSY` | Database permit wait exceeds the configured limit |
+| 503 | `DATABASE_BUSY` | Database-backed operation cannot obtain a permit before it starts |
 
 ### Account overview
 
@@ -221,7 +221,7 @@ Overview failures:
 | 401 | `AUTHENTICATION_REQUIRED` | Bearer token is absent |
 | 401 | `INVALID_TOKEN` | Bearer token is malformed, expired, incorrectly signed, or has an invalid issuer |
 | 404 | `ACCOUNT_NOT_FOUND` | No account exists for the authenticated customer |
-| 503 | `DATABASE_BUSY` | Database permit wait exceeds the configured limit |
+| 503 | `DATABASE_BUSY` | Database-backed operation cannot obtain a permit before it starts |
 
 ### Problem response
 
@@ -307,21 +307,17 @@ Constraint-name inspection, SQL-state handling, a transaction template, or a sep
 
 ## Database Protection Outcomes and Implementation Options
 
-The protected unit is each runtime application SQL statement, rather than each HTTP request or transaction. Flyway startup statements and JDBC metadata calls are outside the runtime limit.
+The assignment says that the legacy database cannot handle more than two requests per second, but it does not define a database request as an individual SQL statement. The protected unit is therefore a database-backed business operation: registration, login, or account overview. This prevents a registration from being rejected after part of its transaction has already run.
 
 Required outcomes:
 
-- Route every runtime application SQL statement through a single limiter, including reads, writes, authentication queries, and retry attempts.
-- Limit statement starts to at most two per second for one application instance, with smooth spacing that does not release queued work in bursts.
-- Keep the limiter enabled by default and make its rate and maximum wait externally configurable.
-- Bound how long callers may wait. When the wait limit is exceeded, or a waiting thread is interrupted, fail safely and return `503 DATABASE_BUSY` with `Retry-After: 1` from an HTTP request.
-- Cover every chosen persistence mechanism. An HTTP-only rate limiter is insufficient because it cannot account reliably for the number of statements or internal retries.
-- Document where interception occurs and demonstrate the coverage and rate under concurrency tests.
-- Treat coordination across multiple application replicas as out of scope.
+- Use one shared limiter for database-backed business operations in one application instance.
+- Acquire a permit before any persistence work begins; do not queue callers or reject a later statement in an already admitted transaction.
+- Fail fast with `503 DATABASE_BUSY` and `Retry-After: 1` when no permit is immediately available.
+- Keep the limiter enabled by default and make its rate externally configurable.
+- Minimize queries made by each use case and treat coordination across multiple replicas as out of scope.
 
-The implementation mechanism is deliberately open. A Hibernate `StatementInspector`, a data-source/JDBC proxy, or another shared persistence gateway is acceptable if it demonstrably covers every runtime SQL path. Direct `JdbcTemplate`, raw JDBC, or alternate persistence paths are also acceptable only when they pass through the same limiter.
-
-A simple recommended design serializes permit scheduling, uses a monotonic clock, spaces permits by 500 milliseconds at the default rate, preserves fair ordering, and applies a five-second maximum wait. Injectable timing abstractions and a dedicated database-busy exception usually make this behavior easier to test, but exact class names, locking primitives, and sleep mechanisms are implementation choices.
+The implementation mechanism is deliberately open. Use an established in-memory rate-limiter library rather than reimplementing concurrency and timing behavior. Guava's `RateLimiter` with non-blocking `tryAcquire()` is a simple suitable choice. An HTTP-only limiter is acceptable only when it has the same admission semantics for every database-backed operation; documentation and requests rejected by validation should not consume database capacity.
 
 Suggested configuration defaults:
 
@@ -331,10 +327,9 @@ app:
     rate-limit:
       enabled: true
       operations-per-second: 2
-      max-wait: 5s
 ```
 
-The limiter may be disabled in integration tests unrelated to throttling to keep the suite fast, but at least one dedicated integration test must exercise it. The exact test shape and tolerance may vary. Tests must include deterministic coverage of scheduling, timeout, and interruption behavior plus a concurrent test that proves the configured two-per-second limit without relying on timing assertions so narrow that normal CI jitter makes them flaky.
+The limiter may be disabled in integration tests unrelated to throttling to keep the suite fast. Unit tests must cover admission, fail-fast rejection, and disabled operation without relying on narrow wall-clock timing assertions.
 
 ## Recommended Application Configuration
 
@@ -386,7 +381,6 @@ app:
     rate-limit:
       enabled: true
       operations-per-second: 2
-      max-wait: 5s
 ```
 
 One straightforward way to enable documentation only through the `docs` profile is an `application-docs.yml` containing:

@@ -49,11 +49,6 @@ public record AppProperties(
     public record Database(@NotNull @Valid RateLimit rateLimit) {
     }
 
-    public record RateLimit(boolean enabled, @Positive int operationsPerSecond, @NotNull Duration maxWait) {
-        public RateLimit {
-            if (maxWait != null && (maxWait.isNegative() || maxWait.isZero())) {
-                throw new IllegalArgumentException("Database rate-limit maximum wait must be positive");
-            }
-        }
+    public record RateLimit(boolean enabled, @Positive int operationsPerSecond) {
     }
 }

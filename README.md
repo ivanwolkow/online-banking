@@ -35,7 +35,7 @@ curl -fsS http://localhost:8080/v3/api-docs.yaml -o docs/openapi.yaml
 
 `application.yml` externalizes country eligibility, business clock zone, account details, JWT issuer/secret/lifetime, and the database limiter. `JWT_SECRET_BASE64` is required at startup and must decode to at least 32 bytes.
 
-Each Hibernate SQL statement passes through `RateLimitedStatementInspector`. By default a single application replica starts no more than two statements per second, smoothly spaced by 500ms, and returns `503 DATABASE_BUSY` after a five-second wait. Multi-replica coordination is intentionally out of scope.
+A global `DatabaseOperationGate` uses Guava's `RateLimiter` to admit at most two database-backed business operations per second for one application replica. It acquires a permit before registration, login, or overview starts persistence work; if capacity is unavailable, the request immediately receives `503 DATABASE_BUSY` with `Retry-After: 1`. Multi-replica coordination is intentionally out of scope.
 
 Registration normalizes usernames to lowercase, accepts NL/BE residences by default, verifies the exact 18th-birthday boundary, creates customer/account in one transaction, stores BCrypt-12 hashes only, and uses iban4j to generate checksum-valid Dutch IBANs. JWT validation is stateless and the overview uses the subject claim only.
 

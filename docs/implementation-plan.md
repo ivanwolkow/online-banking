@@ -4,7 +4,7 @@
 
 This plan is based on the requirements in [Customer Onboarding Assignment.pdf](./Customer%20Onboarding%20Assignment.pdf).
 
-For implementation, read this plan together with the [Implementation Specification](./implementation-specification.md). The specification is authoritative where it makes a design choice more precise.
+For implementation, read this plan together with the [Implementation Specification](./implementation-specification.md). The assignment PDF is the source of truth; either derived document may be revised when it adds unnecessary complexity or misinterprets the assignment.
 
 ## Repository Baseline
 
@@ -76,11 +76,11 @@ Build a Java and Spring Boot backend using Maven and PostgreSQL. The application
 
 ### Legacy database protection
 
-- Enforce the database limit at the persistence boundary rather than only limiting HTTP requests.
-- Route every runtime application SQL operation through a shared gate that permits at most two database operations per second.
+- Admit database-backed business operations through a shared, global gate before they begin persistence work.
+- Permit at most two operations per second for one application instance, failing fast before any database work starts when capacity is unavailable.
 - Minimize the number of queries made by each use case.
-- Throttle both reads and writes, including retry attempts.
-- Verify the behavior with concurrent automated tests.
+- Do not reject a registration midway through its transaction because a later SQL statement cannot obtain a permit.
+- Verify the behavior with automated tests.
 - Scope this rate gate to a single application replica. A distributed limiter for multiple replicas is outside this assignment.
 
 ### Public surface
