@@ -2,7 +2,21 @@
 
 Java 21/Spring Boot backend with three business endpoints: `POST /register`, `POST /login`, and `GET /overview`.
 
-## Test and run locally
+## Run locally
+
+### Recommended: Docker Compose
+
+Prerequisite: Docker Engine with the Docker Compose v2 plugin. Docker Desktop provides both on macOS and Windows; Docker Engine and the Compose plugin can be installed separately on Linux.
+
+This is the self-contained option: it builds the application image, starts PostgreSQL, applies the database migrations, and exposes the API on port 8080.
+
+```sh
+docker compose up --build
+```
+
+Open Swagger UI at http://localhost:8080/swagger-ui.html. Stop the stack with `Ctrl-C`; add `-d` to run it in the background.
+
+### Run the tests
 
 The automated suite uses Testcontainers, so start Docker before running:
 
@@ -10,20 +24,7 @@ The automated suite uses Testcontainers, so start Docker before running:
 ./mvnw test
 ```
 
-To run the application directly, start PostgreSQL 18.6, set the connection details if they differ from the defaults, and run:
-
-```sh
-export JWT_SECRET_BASE64=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
-./mvnw spring-boot:run
-```
-
-The development Compose stack includes PostgreSQL and enables the docs profile:
-
-```sh
-docker compose up --build
-```
-
-Open Swagger UI at http://localhost:8080/swagger-ui.html. To run without documentation endpoints, use `SPRING_PROFILES_ACTIVE=` (or omit the `docs` profile) and run the application directly.
+Docker Compose enables the `docs` profile for reviewer convenience.
 
 Generate the checked-in OpenAPI artifact from a running docs-profile application:
 
