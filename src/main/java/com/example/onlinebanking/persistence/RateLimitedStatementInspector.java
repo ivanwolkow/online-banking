@@ -25,14 +25,22 @@ public class RateLimitedStatementInspector implements StatementInspector {
     }
 
     static void acquirePermit() {
-        if (!enabled) return;
+        if (!enabled) {
+            return;
+        }
+
         long now = System.nanoTime();
         long scheduled;
+
         synchronized (MONITOR) {
             scheduled = Math.max(now, nextPermitNanos);
-            if (scheduled - now > maxWaitNanos) throw new DatabaseBusyException();
+            if (scheduled - now > maxWaitNanos) {
+                throw new DatabaseBusyException();
+            }
+
             nextPermitNanos = scheduled + intervalNanos;
         }
+
         long remaining = scheduled - System.nanoTime();
         if (remaining > 0) {
             try {

@@ -33,7 +33,11 @@ public class ApplicationConfiguration {
 
     @Bean
     IbanGenerator ibanGenerator(AppProperties properties, SecureRandom secureRandom) {
-        return new IbanGenerator(properties.account().ibanCountryCode(), properties.account().ibanBankCode(), secureRandom);
+        return new IbanGenerator(
+                properties.account().ibanCountryCode(),
+                properties.account().ibanBankCode(),
+                secureRandom
+        );
     }
 
     @Bean

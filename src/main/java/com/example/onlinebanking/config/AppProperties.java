@@ -21,13 +21,24 @@ public record AppProperties(
         @Valid Account account,
         @Valid Security security,
         @Valid Database database) {
-    public record Registration(@Min(1) int minimumAge, @NotEmpty List<@NotBlank String> allowedCountries) {
+    public record Registration(
+            @Min(1) int minimumAge,
+            @NotEmpty List<@NotBlank String> allowedCountries
+    ) {
     }
-    public record Account(@NotBlank String ibanCountryCode, @NotBlank String ibanBankCode, @NotBlank String type,
-                          @NotBlank String currency, BigDecimal initialBalance) {
+
+    public record Account(
+            @NotBlank String ibanCountryCode,
+            @NotBlank String ibanBankCode,
+            @NotBlank String type,
+            @NotBlank String currency,
+            BigDecimal initialBalance
+    ) {
     }
+
     public record Security(@Valid Jwt jwt) {
     }
+
     public record Jwt(@NotBlank String issuer, @NotNull Duration ttl, @NotBlank String secretBase64) {
         public Jwt {
             if (ttl != null && (ttl.isNegative() || ttl.isZero())) {
@@ -37,6 +48,7 @@ public record AppProperties(
     }
     public record Database(@Valid RateLimit rateLimit) {
     }
+
     public record RateLimit(boolean enabled, @Positive int operationsPerSecond, @NotNull Duration maxWait) {
         public RateLimit {
             if (maxWait != null && (maxWait.isNegative() || maxWait.isZero())) {

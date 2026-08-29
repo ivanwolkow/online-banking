@@ -7,7 +7,11 @@ import org.springframework.stereotype.Component;
 @Component
 class RateLimiterConfiguration {
     private final AppProperties properties;
-    RateLimiterConfiguration(AppProperties properties) { this.properties = properties; }
+
+    RateLimiterConfiguration(AppProperties properties) {
+        this.properties = properties;
+    }
+
     @PostConstruct
     void configure() {
         AppProperties.RateLimit limit = properties.database().rateLimit();
