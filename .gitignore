@@ -8,3 +8,7 @@ target/
 .idea/
 *.iml
 .DS_Store
+
+# Local Postman workspace state and environments (may contain credentials).
+postman/.postman/
+postman/postman/

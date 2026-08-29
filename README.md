@@ -40,3 +40,17 @@ A global `DatabaseOperationGate` uses Guava's `RateLimiter` to admit at most two
 Registration normalizes usernames to lowercase, accepts NL/BE residences by default, verifies the exact 18th-birthday boundary, creates customer/account in one transaction, stores BCrypt-12 hashes only, and uses iban4j to generate checksum-valid Dutch IBANs. JWT validation is stateless and the overview uses the subject claim only.
 
 Import `postman/Customer-Onboarding.postman_collection.json` to exercise the happy path and contract failure scenarios; it captures the generated password and bearer token automatically.
+
+## Manual validation
+
+The Postman collection was run manually against the local application. The screenshots below show successful registration, login, account overview, invalid-token rejection, and all nine collection assertions passing. The generated password and bearer token are visibly redacted.
+
+![Successful registration with password redacted](docs/manual-validation/postman-register-redacted.png)
+
+![Successful login with bearer token redacted](docs/manual-validation/postman-login-redacted.png)
+
+![Successful account overview](docs/manual-validation/postman-overview.png)
+
+![Invalid bearer token rejected](docs/manual-validation/postman-invalid-token-redacted.png)
+
+![Postman collection run](docs/manual-validation/postman-collection-run.png)
