@@ -8,13 +8,13 @@ import java.util.List;
 
 @Schema(description = "RFC 9457-style application problem")
 public record ProblemResponse(
-        @Schema(example = "urn:problem:validation-error") String type,
-        @Schema(example = "Request validation failed") String title,
-        @Schema(example = "400") int status,
-        @Schema(example = "One or more fields are invalid.") String detail,
-        @Schema(example = "/register") String instance,
-        @Schema(example = "VALIDATION_ERROR") String code,
-        @Schema(example = "2026-08-27T12:00:00Z") Instant timestamp,
+        @Schema(description = "Problem type URI") String type,
+        @Schema(description = "Short summary of the problem") String title,
+        @Schema(description = "Always matches the HTTP response status") int status,
+        @Schema(description = "Human-readable explanation") String detail,
+        @Schema(description = "Request URI that produced the problem") String instance,
+        @Schema(description = "Stable application error code") String code,
+        @Schema(description = "Time at which the problem was produced") Instant timestamp,
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         List<FieldErrorResponse> errors) {
 

@@ -205,27 +205,27 @@ components:
       properties:
         type:
           type: string
-          example: urn:problem:validation-error
+          description: Problem type URI
         title:
           type: string
-          example: Request validation failed
+          description: Short summary of the problem
         status:
           type: integer
           format: int32
-          example: 400
+          description: Always matches the HTTP response status
         detail:
           type: string
-          example: One or more fields are invalid.
+          description: Human-readable explanation
         instance:
           type: string
-          example: /register
+          description: Request URI that produced the problem
         code:
           type: string
-          example: VALIDATION_ERROR
+          description: Stable application error code
         timestamp:
           type: string
           format: date-time
-          example: 2026-08-27T12:00:00Z
+          description: Time at which the problem was produced
         errors:
           type: array
           items:
