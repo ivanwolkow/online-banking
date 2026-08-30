@@ -1,6 +1,5 @@
 package com.example.onlinebanking.service;
 
-import org.iban4j.IbanUtil;
 import org.junit.jupiter.api.Test;
 
 import java.security.SecureRandom;
@@ -8,8 +7,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,19 +30,4 @@ class RegistrationServiceRulesTest {
         assertThat(password).hasSize(22).matches("[A-Za-z0-9_-]+$");
     }
 
-    @Test
-    void iban4jGeneratesValidDutchAccountNumbersForTheConfiguredBank() {
-        SecureRandom random = new SecureRandom();
-        Set<String> values = new HashSet<>();
-
-        for (int index = 0; index < 20; index++) {
-            String iban = RegistrationService.generateIban("NL", "RBNK", random);
-
-            assertThat(iban).matches("^NL[0-9]{2}RBNK[0-9]{10}$");
-            assertThat(IbanUtil.isValid(iban)).isTrue();
-            values.add(iban);
-        }
-
-        assertThat(values).hasSizeGreaterThan(1);
-    }
 }

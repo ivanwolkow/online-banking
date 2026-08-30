@@ -26,6 +26,7 @@ class RegistrationServiceAdmissionTest {
         CustomerRepository customers = mock(CustomerRepository.class);
         AccountRepository accounts = mock(AccountRepository.class);
         PasswordEncoder encoder = mock(PasswordEncoder.class);
+        IbanProvider ibanProvider = mock(IbanProvider.class);
         DatabaseOperationGate gate = new DatabaseOperationGate(properties());
         gate.acquirePermit();
         RegistrationService service = new RegistrationService(
@@ -35,13 +36,14 @@ class RegistrationServiceAdmissionTest {
                 Clock.systemUTC(),
                 encoder,
                 new SecureRandom(),
+                ibanProvider,
                 gate
         );
 
         assertThatThrownBy(() -> service.register(request()))
                 .isInstanceOf(DatabaseBusyException.class);
 
-        verifyNoInteractions(customers, accounts, encoder);
+        verifyNoInteractions(customers, accounts, encoder, ibanProvider);
     }
 
     private static RegisterRequest request() {

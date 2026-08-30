@@ -2,6 +2,7 @@ package com.example.onlinebanking;
 
 import com.example.onlinebanking.persistence.AccountRepository;
 import com.example.onlinebanking.persistence.CustomerRepository;
+import com.example.onlinebanking.service.IbanProvider;
 import org.iban4j.IbanUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -27,6 +29,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
 
 @Testcontainers
 @ActiveProfiles("docs")
@@ -60,6 +63,9 @@ class OnboardingIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbc;
+
+    @MockitoSpyBean
+    private IbanProvider ibanProvider;
 
     @BeforeEach
     void clearDatabase() {
@@ -145,6 +151,28 @@ class OnboardingIntegrationTest {
 
         assertProblem(duplicate, 400, "USERNAME_ALREADY_EXISTS", false);
         assertThat(customers.count()).isEqualTo(1);
+        assertThat(accounts.count()).isEqualTo(1);
+    }
+
+    @Test
+    void rollsBackRegistrationWhenTheGeneratedIbanAlreadyExists() throws Exception {
+        assertThat(post("/register", registrationBody("Ada", "existing.iban", "NL")).statusCode())
+                .isEqualTo(201);
+        String existingIban = jdbc.queryForObject("""
+                select a.iban
+                from accounts a
+                join customers c on c.id = a.customer_id
+                where c.username = 'existing.iban'
+                """, String.class);
+        doReturn(existingIban).when(ibanProvider).provide();
+
+        HttpResponse<String> collision = post(
+                "/register",
+                registrationBody("Grace", "iban.collision", "BE")
+        );
+
+        assertProblem(collision, 500, "INTERNAL_ERROR", false);
+        assertThat(customers.findByUsername("iban.collision")).isEmpty();
         assertThat(accounts.count()).isEqualTo(1);
     }
 

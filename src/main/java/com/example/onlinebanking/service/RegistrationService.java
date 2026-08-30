@@ -7,8 +7,6 @@ import com.example.onlinebanking.model.AddressRequest;
 import com.example.onlinebanking.model.RegisterRequest;
 import com.example.onlinebanking.model.RegisterResponse;
 import com.example.onlinebanking.persistence.*;
-import org.iban4j.CountryCode;
-import org.iban4j.Iban;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +26,7 @@ public class RegistrationService {
     private final Clock clock;
     private final PasswordEncoder encoder;
     private final SecureRandom random;
+    private final IbanProvider ibanProvider;
     private final DatabaseOperationGate databaseOperations;
 
     public RegistrationService(
@@ -37,6 +36,7 @@ public class RegistrationService {
             Clock clock,
             PasswordEncoder encoder,
             SecureRandom random,
+            IbanProvider ibanProvider,
             DatabaseOperationGate databaseOperations
     ) {
         this.customers = customers;
@@ -45,6 +45,7 @@ public class RegistrationService {
         this.clock = clock;
         this.encoder = encoder;
         this.random = random;
+        this.ibanProvider = ibanProvider;
         this.databaseOperations = databaseOperations;
     }
 
@@ -69,11 +70,7 @@ public class RegistrationService {
         String password = generatePassword(random);
         String hash = encoder.encode(password);
 
-        String iban = generateIban(
-                properties.account().ibanCountryCode(),
-                properties.account().ibanBankCode(),
-                random
-        );
+        String iban = ibanProvider.provide();
 
         persist(request, username, country, hash, iban);
 
@@ -89,14 +86,6 @@ public class RegistrationService {
         random.nextBytes(entropy);
 
         return Base64.getUrlEncoder().withoutPadding().encodeToString(entropy);
-    }
-
-    static String generateIban(String countryCode, String bankCode, SecureRandom random) {
-        return new Iban.Builder(random)
-                .countryCode(CountryCode.getByCode(countryCode.toUpperCase(Locale.ROOT)))
-                .bankCode(bankCode.toUpperCase(Locale.ROOT))
-                .buildRandom()
-                .toString();
     }
 
     private void persist(RegisterRequest request, String username, String country, String hash, String iban) {
