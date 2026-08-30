@@ -3,8 +3,6 @@ package com.example.onlinebanking.service;
 import com.example.onlinebanking.model.AddressRequest;
 import com.example.onlinebanking.model.RegisterRequest;
 import com.example.onlinebanking.config.AppProperties;
-import com.example.onlinebanking.persistence.AccountRepository;
-import com.example.onlinebanking.persistence.CustomerRepository;
 import com.example.onlinebanking.persistence.DatabaseBusyException;
 import com.example.onlinebanking.persistence.DatabaseOperationGate;
 import org.junit.jupiter.api.Test;
@@ -17,33 +15,67 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 class RegistrationServiceAdmissionTest {
     @Test
-    void rejectsRegistrationBeforeAnyPersistenceWorkWhenNoPermitIsAvailable() {
-        CustomerRepository customers = mock(CustomerRepository.class);
-        AccountRepository accounts = mock(AccountRepository.class);
+    void rejectsRegistrationBeforePersistenceWorkWhenNoPermitIsAvailable() {
         PasswordEncoder encoder = mock(PasswordEncoder.class);
         IbanProvider ibanProvider = mock(IbanProvider.class);
+        RegistrationPersistenceService persistence = mock(RegistrationPersistenceService.class);
         DatabaseOperationGate gate = new DatabaseOperationGate(properties());
         gate.acquirePermit();
         RegistrationService service = new RegistrationService(
-                customers,
-                accounts,
                 properties(),
                 Clock.systemUTC(),
                 encoder,
                 new SecureRandom(),
                 ibanProvider,
-                gate
+                gate,
+                persistence
         );
 
         assertThatThrownBy(() -> service.register(request()))
                 .isInstanceOf(DatabaseBusyException.class);
 
-        verifyNoInteractions(customers, accounts, encoder, ibanProvider);
+        verifyNoInteractions(persistence);
+    }
+
+    @Test
+    void acquiresOnePermitImmediatelyBeforePersistenceWork() {
+        PasswordEncoder encoder = mock(PasswordEncoder.class);
+        IbanProvider ibanProvider = mock(IbanProvider.class);
+        RegistrationPersistenceService persistence = mock(RegistrationPersistenceService.class);
+        DatabaseOperationGate gate = mock(DatabaseOperationGate.class);
+        when(encoder.encode(anyString())).thenReturn("hash");
+        when(ibanProvider.provide()).thenReturn("iban");
+        RegistrationService service = new RegistrationService(
+                properties(),
+                Clock.systemUTC(),
+                encoder,
+                new SecureRandom(),
+                ibanProvider,
+                gate,
+                persistence
+        );
+
+        service.register(request());
+
+        var order = inOrder(gate, persistence);
+        order.verify(gate).acquirePermit();
+        order.verify(persistence).createCustomerAndAccount(
+                request(),
+                "ada.lovelace",
+                "NL",
+                "hash",
+                "iban"
+        );
+        verify(gate).acquirePermit();
     }
 
     private static RegisterRequest request() {
