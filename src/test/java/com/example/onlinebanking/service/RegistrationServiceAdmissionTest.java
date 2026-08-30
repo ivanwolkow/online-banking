@@ -9,7 +9,6 @@ import com.example.onlinebanking.persistence.DatabaseBusyException;
 import com.example.onlinebanking.persistence.DatabaseOperationGate;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.security.SecureRandom;
@@ -26,14 +25,12 @@ class RegistrationServiceAdmissionTest {
     void rejectsRegistrationBeforeAnyPersistenceWorkWhenNoPermitIsAvailable() {
         CustomerRepository customers = mock(CustomerRepository.class);
         AccountRepository accounts = mock(AccountRepository.class);
-        TransactionTemplate transactions = mock(TransactionTemplate.class);
         PasswordEncoder encoder = mock(PasswordEncoder.class);
         DatabaseOperationGate gate = new DatabaseOperationGate(properties());
         gate.acquirePermit();
         RegistrationService service = new RegistrationService(
                 customers,
                 accounts,
-                transactions,
                 properties(),
                 Clock.systemUTC(),
                 encoder,
@@ -44,7 +41,7 @@ class RegistrationServiceAdmissionTest {
         assertThatThrownBy(() -> service.register(request()))
                 .isInstanceOf(DatabaseBusyException.class);
 
-        verifyNoInteractions(customers, accounts, transactions, encoder);
+        verifyNoInteractions(customers, accounts, encoder);
     }
 
     private static RegisterRequest request() {

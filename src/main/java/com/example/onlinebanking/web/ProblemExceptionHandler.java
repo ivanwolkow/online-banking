@@ -1,14 +1,16 @@
 package com.example.onlinebanking.web;
 
-import com.example.onlinebanking.model.ProblemResponse;
 import com.example.onlinebanking.exception.AccountNotFoundException;
-import com.example.onlinebanking.exception.AccountNumberGenerationFailedException;
 import com.example.onlinebanking.exception.DomainException;
 import com.example.onlinebanking.exception.InvalidCredentialsException;
+import com.example.onlinebanking.model.ProblemResponse;
 import com.example.onlinebanking.persistence.DatabaseBusyException;
+import com.example.onlinebanking.persistence.SchemaConstraints;
 import jakarta.servlet.http.HttpServletRequest;
+import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -55,14 +57,40 @@ public class ProblemExceptionHandler {
 
     @ExceptionHandler(DomainException.class)
     ResponseEntity<ProblemResponse> domain(DomainException exception, HttpServletRequest request) {
-        if (exception instanceof AccountNumberGenerationFailedException
-                || exception instanceof AccountNotFoundException) {
-            return internal(exception, request);
+        return response(HttpStatus.BAD_REQUEST, exception.code(), exception.title(), exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(AccountNotFoundException.class)
+    ResponseEntity<ProblemResponse> accountNotFound(AccountNotFoundException exception, HttpServletRequest request) {
+        return internal(exception, request);
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    ResponseEntity<ProblemResponse> invalidCredentials(InvalidCredentialsException exception, HttpServletRequest request) {
+        return response(
+                HttpStatus.UNAUTHORIZED,
+                exception.code(),
+                exception.title(),
+                exception.getMessage(),
+                request,
+                null
+        );
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    ResponseEntity<ProblemResponse> integrity(DataIntegrityViolationException exception, HttpServletRequest request) {
+        if (hasConstraint(exception, SchemaConstraints.CUSTOMER_USERNAME_UNIQUE)) {
+            return response(
+                    HttpStatus.BAD_REQUEST,
+                    "USERNAME_ALREADY_EXISTS",
+                    "Username already exists",
+                    "The username is already in use.",
+                    request,
+                    null
+            );
         }
-
-        HttpStatus status = statusFor(exception);
-
-        return response(status, exception.code(), exception.title(), exception.getMessage(), request, null);
+        // TODO: When metrics are introduced, count ACCOUNT_IBAN_UNIQUE violations.
+        return internal(exception, request);
     }
 
     @ExceptionHandler(DatabaseBusyException.class)
@@ -103,11 +131,15 @@ public class ProblemExceptionHandler {
                 .body(problem);
     }
 
-    private HttpStatus statusFor(DomainException exception) {
-        if (exception instanceof InvalidCredentialsException) {
-            return HttpStatus.UNAUTHORIZED;
+    private static boolean hasConstraint(Throwable exception, String expectedName) {
+        for (Throwable current = exception; current != null; current = current.getCause()) {
+            if (current instanceof ConstraintViolationException violation
+                    && expectedName.equalsIgnoreCase(violation.getConstraintName())) {
+                return true;
+            }
         }
-        return HttpStatus.BAD_REQUEST;
+
+        return false;
     }
 
     private ProblemResponse problem(

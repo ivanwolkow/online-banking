@@ -1,21 +1,17 @@
 package com.example.onlinebanking.service;
 
 import com.example.onlinebanking.config.AppProperties;
-import com.example.onlinebanking.exception.AccountNumberGenerationFailedException;
 import com.example.onlinebanking.exception.CountryNotAllowedException;
 import com.example.onlinebanking.exception.CustomerUnderageException;
-import com.example.onlinebanking.exception.UsernameAlreadyExistsException;
 import com.example.onlinebanking.model.AddressRequest;
 import com.example.onlinebanking.model.RegisterRequest;
 import com.example.onlinebanking.model.RegisterResponse;
 import com.example.onlinebanking.persistence.*;
-import org.hibernate.exception.ConstraintViolationException;
 import org.iban4j.CountryCode;
 import org.iban4j.Iban;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.Clock;
@@ -26,10 +22,8 @@ import java.util.UUID;
 
 @Service
 public class RegistrationService {
-    private static final int IBAN_ATTEMPTS = 5;
     private final CustomerRepository customers;
     private final AccountRepository accounts;
-    private final TransactionTemplate transactions;
     private final AppProperties properties;
     private final Clock clock;
     private final PasswordEncoder encoder;
@@ -39,7 +33,6 @@ public class RegistrationService {
     public RegistrationService(
             CustomerRepository customers,
             AccountRepository accounts,
-            TransactionTemplate transactions,
             AppProperties properties,
             Clock clock,
             PasswordEncoder encoder,
@@ -48,7 +41,6 @@ public class RegistrationService {
     ) {
         this.customers = customers;
         this.accounts = accounts;
-        this.transactions = transactions;
         this.properties = properties;
         this.clock = clock;
         this.encoder = encoder;
@@ -56,6 +48,7 @@ public class RegistrationService {
         this.databaseOperations = databaseOperations;
     }
 
+    @Transactional
     public RegisterResponse register(RegisterRequest request) {
         String username = request.username().trim().toLowerCase(Locale.ROOT);
         String country = request.address().countryCode().toUpperCase(Locale.ROOT);
@@ -76,28 +69,15 @@ public class RegistrationService {
         String password = generatePassword(random);
         String hash = encoder.encode(password);
 
-        for (int attempt = 0; attempt < IBAN_ATTEMPTS; attempt++) {
-            try {
-                String iban = generateIban(
-                        properties.account().ibanCountryCode(),
-                        properties.account().ibanBankCode(),
-                        random
-                );
-                transactions.executeWithoutResult(status -> persist(request, username, country, hash, iban));
+        String iban = generateIban(
+                properties.account().ibanCountryCode(),
+                properties.account().ibanBankCode(),
+                random
+        );
 
-                return new RegisterResponse(username, password);
-            } catch (DataIntegrityViolationException exception) {
-                if (isUsernameConflict(exception)) {
-                    throw new UsernameAlreadyExistsException();
-                }
-                if (isIbanConflict(exception)) {
-                    continue;
-                }
-                throw exception;
-            }
-        }
+        persist(request, username, country, hash, iban);
 
-        throw new AccountNumberGenerationFailedException();
+        return new RegisterResponse(username, password);
     }
 
     static boolean isUnderage(LocalDate dateOfBirth, int minimumAge, Clock clock) {
@@ -146,22 +126,4 @@ public class RegistrationService {
         accounts.saveAndFlush(account);
     }
 
-    private static boolean isUsernameConflict(Exception exception) {
-        return hasConstraint(exception, SchemaConstraints.CUSTOMER_USERNAME_UNIQUE);
-    }
-
-    private static boolean isIbanConflict(Exception exception) {
-        return hasConstraint(exception, SchemaConstraints.ACCOUNT_IBAN_UNIQUE);
-    }
-
-    private static boolean hasConstraint(Throwable exception, String expectedName) {
-        for (Throwable current = exception; current != null; current = current.getCause()) {
-            if (current instanceof ConstraintViolationException violation
-                    && expectedName.equalsIgnoreCase(violation.getConstraintName())) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }
