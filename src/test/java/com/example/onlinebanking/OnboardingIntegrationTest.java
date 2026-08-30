@@ -177,17 +177,12 @@ class OnboardingIntegrationTest {
     }
 
     @Test
-    void validatesTrimmedValuesAndRejectsUnknownProperties() throws Exception {
+    void validatesTrimmedValues() throws Exception {
         HttpResponse<String> tooShortAfterTrimming = post(
                 "/register",
                 registrationBody("Ada", "  ab  ", "NL")
         );
         assertProblem(tooShortAfterTrimming, 400, "VALIDATION_ERROR", true);
-
-        String unknownProperty = registrationBody("Ada", "ada.valid", "NL")
-                .replace("\n}", ",\n  \"unexpected\": true\n}");
-        HttpResponse<String> unknown = post("/register", unknownProperty);
-        assertProblem(unknown, 400, "MALFORMED_REQUEST", false);
     }
 
     @Test

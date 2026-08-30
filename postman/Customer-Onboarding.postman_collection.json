@@ -116,18 +116,6 @@
           ]}}]
         },
         {
-          "name": "Unknown property",
-          "request": {
-            "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "url": "{{baseUrl}}/login",
-            "body": {"mode": "raw", "raw": "{\"username\":\"{{username}}\",\"password\":\"x\",\"unexpected\":true}"}
-          },
-          "event": [{"listen": "test", "script": {"exec": [
-            "pm.test('malformed request problem returned', () => { pm.response.to.have.status(400); pm.expect(pm.response.json().code).to.eql('MALFORMED_REQUEST'); });"
-          ]}}]
-        },
-        {
           "name": "Underage customer",
           "request": {
             "method": "POST",

@@ -144,7 +144,7 @@ Registration failures:
 
 | Status | Code | Condition |
 | --- | --- | --- |
-| 400 | `MALFORMED_REQUEST` | Invalid JSON or an unknown property |
+| 400 | `MALFORMED_REQUEST` | Invalid JSON |
 | 400 | `VALIDATION_ERROR` | Structural or field validation failure |
 | 400 | `CUSTOMER_UNDERAGE` | Customer has not reached age 18 |
 | 400 | `COUNTRY_NOT_ALLOWED` | Normalized country is not configured as allowed |
@@ -185,7 +185,7 @@ Login failures:
 
 | Status | Code | Condition |
 | --- | --- | --- |
-| 400 | `MALFORMED_REQUEST` | Invalid JSON or an unknown property |
+| 400 | `MALFORMED_REQUEST` | Invalid JSON |
 | 400 | `VALIDATION_ERROR` | Missing or invalid field |
 | 401 | `INVALID_CREDENTIALS` | Unknown username or incorrect password |
 | 500 | `INTERNAL_ERROR` | An internal failure occurred; implementation details are not exposed |
@@ -344,9 +344,6 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/online_banking}
     username: ${DB_USERNAME:online_banking}
     password: ${DB_PASSWORD:online_banking}
-  jackson:
-    deserialization:
-      fail-on-unknown-properties: true
   jpa:
     open-in-view: false
     hibernate:
